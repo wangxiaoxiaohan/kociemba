@@ -36,7 +36,6 @@ static const int phrase1_eo_size = 1 << 8;
 int8_t phrase1_edges[phrase1_edges_size];
 //角块方向 这里定义了 3^8种 事实上其中只有3^7的合法的,旋转过程中不会出现，为了方便索引才这样使用
 int8_t phrase1_co[phrase1_co_size];
-//棱块方向 这里定义了 2^8种 事实上其中只有2^7的合法的,旋转过程中不会出现，为了方便索引才这样使用
 int8_t phrase1_eo[phrase1_eo_size];
 int8_t phase1_co_move[phrase1_co_size][MOVE_COUNT];
 int8_t phase1_eo_move[phrase1_eo_size][MOVE_COUNT];
@@ -81,6 +80,9 @@ struct search_t
 	vi state;
 	int  face, total_depth,current_depth;
 	steps_t* steps;
+	int phase1_co_index;
+	int phase1_eo_index;
+	int phase1_edges_index;
 };
 
 
@@ -189,7 +191,7 @@ void phase1_fill_heuristic(vi goalstate,int8_t *dest,int destSize,vi power_n,int
 	dest[0] = 0;
 	while(!q.empty()){ 
 		pair<vi ,int> front = q.front();
-		//复用 to do
+		// to do 复用
 		int fatherIndex = 0;
 		vi fatherblockOrientation(front.first.begin() + 20 + type * 12,front.first.begin() + 28 + type * 12);	
 		for(int i = 0 ; i < power_size ; i++){
@@ -299,6 +301,48 @@ void phase1_edges_fill_heuristic(vi state){
 	}
 		
 }
+int calculateIndex(vi state,int type){
+	int ret = 0;
+	switch(type){
+		case phase1_co :
+		{
+			vi co(state.begin() + 32,state.begin() + 40);
+			for(int i = 0 ; i < co.size();i++){
+				ret += power3_8[i] * co[i];
+			}
+		}
+		break;
+		case phase1_eo:
+		{
+			vi eo(state.begin() + 20,state.begin() + 28);
+			for(int i = 0 ; i < eo.size();i++){
+				ret += power2_8[i] * eo[i];
+			}
+		}
+		break;
+		case phase1_edges:
+		{
+			vi edges_blockPosition(state.begin(),state.begin() + 12);
+			int OrIndex = 0;
+
+			for(int i = 0; i < 12;i++){
+				if(edges_blockPosition[i] < 8)
+					edges_blockPosition[i] = 0;
+			}  
+			ret = perm(edges_blockPosition,factorial_12_4);
+			for(int i = 0 ; i < 12 ;i ++){
+				if(state[i] >= 8)
+					OrIndex +=	power2_8[ state[i] - 8 + 4] * state[i + 20] ;	
+			}
+			ret = ret * 16 + OrIndex;
+		}
+		break;
+
+	}
+	return ret;
+
+}
+
 int estimate(vi state,int tpye){
 	if(tpye == 0){
 		vi co(state.begin() + 32,state.begin() + 40);
@@ -307,13 +351,7 @@ int estimate(vi state,int tpye){
 		for(int i = 0 ; i < co.size();i++){
 			co_index += power3_8[i] * co[i];
 		}
-		/*
-		if(phrase1_co[co_index] == -1){
-			printf("@@@@@@@@@@do not find co_estimat_value !!!!!!!co_index :%d ",co_index);
-			//exit(0);
-			sleep(1);
-		}
-		*/
+
 		co_estimat_value = phrase1_co[co_index];
 
 	//	printf("co_estimat_value:%d  ",co_estimat_value);
@@ -327,13 +365,7 @@ int estimate(vi state,int tpye){
 		for(int i = 0 ; i < eo.size();i++){
 			eo_index += power2_8[i] * eo[i];
 		}
-		/*
-		if(phrase1_eo[eo_index] == -1){
-			printf("@@@@@@@@@@do not find eo_estimat_value !!!!!!!eo_index :%d ",eo_index);
-			//exit(0);
-			sleep(1);
-		}
-		*/
+
 		eo_estimat_value = phrase1_eo[eo_index];
 
 	//	printf("eo_estimat_value:%d  ",eo_estimat_value);
@@ -409,12 +441,18 @@ bool DFSphase1(search_t& se_t){
 			if(move / 3 == se_t.face ) continue;
 			//struct timeval timeEnd, timeMid,timeStart; 
 			//gettimeofday(&timeStart, NULL );
-			vi newstate = applyMove(move, se_t.state);
+			//vi newstate = applyMove(move, se_t.state);
 			//gettimeofday(&timeMid, NULL );
-			int estimateval = estimate(newstate,0);
+			//int estimateval = estimate(newstate,0);
 			//gettimeofday(&timeEnd, NULL );
 			//total_time_applymove += (timeMid.tv_sec - timeStart.tv_sec) * 1000000 + (timeMid.tv_usec - timeStart.tv_usec); 
 			//total_time_estmate += (timeEnd.tv_sec - timeMid.tv_sec) * 1000000 + (timeEnd.tv_usec - timeMid.tv_usec); 
+			int phase1_co_index = phase1_co_move[se_t.phase1_co_index][move];
+			int phase1_eo_index = phase1_eo_move[se_t.phase1_eo_index][move];
+			int phase1_edges_index = phase1_edges_move[se_t.phase1_edges_index][move];
+			
+			int estimateval = max(max(phrase1_co[phase1_co_index],phrase1_eo[phase1_eo_index]),phrase1_edges[phase1_edges_index]); 
+			//printf("%d %d %d %d %d  %d %d move %d\n",phase1_co_index,phrase1_co[phase1_co_index],phase1_eo_index,phrase1_eo[phase1_eo_index],phase1_edges_index,phrase1_edges[phase1_edges_index],estimateval,move);
 			if(estimateval + se_t.current_depth + 1 <= se_t.total_depth){
 				(*se_t.steps)[se_t.current_depth] = move;
 				if(estimateval == 0){
@@ -423,8 +461,11 @@ bool DFSphase1(search_t& se_t){
 				
 				search_t newSe_t = se_t;
 				newSe_t.current_depth += 1;
-				newSe_t.state = newstate;
 				newSe_t.face = move / 3;
+			//	newSe_t.state = newstate;
+				newSe_t.phase1_co_index = phase1_co_index;
+				newSe_t.phase1_eo_index = phase1_eo_index;
+				newSe_t.phase1_edges_index = phase1_edges_index;
 				if(DFSphase1(newSe_t))
 					return true;			
 			} 
@@ -471,11 +512,17 @@ bool phase(vi state){
 		printf("!!!!!!!!!!!!!!!!!!!!!depth %d\n",depth);
 		steps_t steps(depth);
 		search_t search;
+
 		search.face = 6;
-		search.state = state;
+		//search.state = state;
 		search.current_depth = 0;
 		search.total_depth = depth;
 		search.steps = &steps;
+		search.phase1_co_index = calculateIndex(state,phase1_co);
+		search.phase1_eo_index = calculateIndex(state,phase1_eo);
+		search.phase1_edges_index = calculateIndex(state,phase1_edges);
+		printf("phase1_co_index %d phase1_eo_index %d phase1_edges_index %d \n",search.phase1_co_index,search.phase1_eo_index,search.phase1_edges_index);
+
 		if(DFSphase1(search)){
 			for( int i=0; i<depth; i++ ){
 				printf("  ");
@@ -549,16 +596,46 @@ int main(int argc ,char **argv){
 	}
 
 
-
+	
 	phase2_fill_heuristic(goalState,phrase2_edges1,phrase2_edges1_size, factorial_8,8,phase2_edges1);
 	phase2_fill_heuristic(goalState,phrase2_edges2,phrase2_edges2_size, factorial_4,4,phase2_edges2);
 	phase2_fill_heuristic(goalState,phrase2_corners,phrase2_corners_size, factorial_8,8,phase2_corners);
 	//phase2_fill_edges(goalState);
 	//phase2_fill_cornors(goalState);
-	
+
+	memset(phase1_co_move,0xff,phrase1_co_size * MOVE_COUNT);
 	phase1_fill_heuristic(goalState,phrase1_co,phrase1_co_size,power3_8,8,phase1_co);
+	int co_initcount = 0;
+	for(int i = 0 ;i < phrase1_co_size;i ++){
+		for(int j= 0 ; j <MOVE_COUNT;j ++ )
+			if(phase1_co_move[i][j] != -1)
+				co_initcount ++;
+	}
+	printf("co_initcount %d\n",co_initcount);
+
+
+	
+	memset(phase1_eo_move,0xff,phrase1_eo_size * MOVE_COUNT);
 	phase1_fill_heuristic(goalState,phrase1_eo,phrase1_eo_size,power2_8,8,phase1_eo);
+	int eo_initcount = 0;
+	for(int i = 0 ;i < phrase1_eo_size ;i ++){
+		for(int j= 0 ; j <MOVE_COUNT;j ++ )
+			if(phase1_eo_move[i][j] != -1)
+				eo_initcount ++;
+	}
+	printf("eo_initcount %d\n",eo_initcount);
+
+	
+	
+	memset(phase1_edges_move,0xff,phrase1_edges_size * MOVE_COUNT);
 	phase1_edges_fill_heuristic(goalState);
+	int edges_initcount = 0;
+	for(int i = 0 ;i < phrase1_edges_size;i ++){
+		for(int j= 0 ; j <MOVE_COUNT;j ++ )
+			if(phase1_edges_move[i][j] != -1)
+				edges_initcount ++;
+	}
+	printf("edges_initcount %d\n",edges_initcount);
 
 	printf("------------------------------------------\n");
 
