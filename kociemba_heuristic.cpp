@@ -14,23 +14,21 @@
 using namespace std;
 
 /*需要优化的地方 ：
-  1.初始化启发函数和搜索解法用到的索引号查找代码 要复用
-  2.中层棱块的表使用数组
   3.phase1 phase2 api合并
   4.启发表写文件
   5.做一个cube 结构体
-  6.同一个面转动的case优化
 */
 #define MOVE_COUNT 18
+#define MOVE_COUNT_2 10
 
 static const int phrase2_corners_size = 40320; // 8!
 static const int phrase2_edges1_size = 40320;  // 8!
 static const int phrase2_edges2_size = 24;	   // 4!
-static const int phrase1_edges_size = 12 * 11 * 10 * 9 * 16;
+static const int phrase2_edges_size = 24 * 40320;	   // 4!
 
+static const int phrase1_edges_size = 12 * 11 * 10 * 9 * 16;
 static const int phrase1_co_size = 6561;
 static const int phrase1_eo_size = 4096;
-
 
 int8_t phrase1_edges[phrase1_edges_size];
 int8_t phrase1_co[phrase1_co_size];//角块方向 这里定义了 3^8种 事实上其中只有3^7的合法的,旋转过程中不会出现，为了方便索引才这样使用
@@ -45,11 +43,19 @@ int8_t phrase2_corners[phrase2_corners_size ];
 int8_t phrase2_edges1[phrase2_edges1_size ];
 int8_t phrase2_edges2[phrase2_edges2_size];
 
-int phrase2_corners_move[phrase2_corners_size ][MOVE_COUNT];
-int phrase2_edges1_move[phrase2_edges1_size ][MOVE_COUNT];
-int phrase2_edges2_move[phrase2_edges2_size][MOVE_COUNT];
 
-int applicableMoves[] = { 0, 262143, 259263, 74943, 74898 };
+int8_t phrase2_edges[phrase2_edges_size];
+
+
+int phrase2_corners_move[phrase2_corners_size ][MOVE_COUNT_2];
+int phrase2_edges1_move[phrase2_edges1_size ][MOVE_COUNT_2];
+int phrase2_edges2_move[phrase2_edges2_size][MOVE_COUNT_2];
+
+int phrase2_edges_move[phrase2_edges_size][MOVE_COUNT_2];
+
+
+//int applicableMoves[] = { 0, 262143, 259263, 74943, 74898 };
+int moveLimit = 74943;
 int affectedCubies[][8] = {
 	{  0,  1,  2,  3,  0,  1,  2,  3 },   // U   
 	{  4,  7,  6,  5,  4,  5,  6,  7 },   // D
@@ -74,10 +80,10 @@ enum pahse_type{
 	phase1_eo = 0,
 	phase1_co,
 	phase1_edges,
-	
 	phase2_edges1,
 	phase2_edges2,
-	phase2_corners
+	phase2_corners,
+	phase2_edges
 };
 struct search_t
 {
@@ -90,6 +96,7 @@ struct search_t
 	int phase2_edges1_index;
 	int phase2_edges2_index;
 	int phase2_corners_index;
+	int phase2_edges_index;
 };
 
 
@@ -185,12 +192,12 @@ int calculateIndex(vi state,int type){
 		break;
 		case phase2_edges2:
 		{
-			vi mediaEdgeBlocks(state.begin() +  8 ,state.begin() + 12);
-			for(int i = 0 ;i < mediaEdgeBlocks.size(); i++){
+			vi middleEdgeBlocks(state.begin() +  8 ,state.begin() + 12);
+			for(int i = 0 ;i < middleEdgeBlocks.size(); i++){
 				//printf("mediaEdgeBlocksIndex[i] %d\n",mediaEdgeBlocks[i]);
-				mediaEdgeBlocks[i] = mediaEdgeBlocks[i] - 8;
+				middleEdgeBlocks[i] = middleEdgeBlocks[i] - 8;
 			}
-			ret = cantor(mediaEdgeBlocks,factorial_4);
+			ret = cantor(middleEdgeBlocks,factorial_4);
 		}
 		break;
 		case phase2_corners:
@@ -203,6 +210,26 @@ int calculateIndex(vi state,int type){
 			ret = cantor(cornorBlocks,factorial_8);
 		}
 		break;
+		case phase2_edges:
+		{
+			
+			vi edges1Blocks(state.begin()  ,state.begin() + 8);
+			for(int i = 0;i < edges1Blocks.size(); i++){
+				edges1Blocks[i] = edges1Blocks[i] - 8;
+			}
+			int edges1_index = cantor(edges1Blocks,factorial_8);
+			
+			
+			vi edges2Blocks(state.begin() + 8,state.begin() +12);
+			for(int i = 0;i < edges2Blocks.size(); i++){
+				edges2Blocks[i] = edges2Blocks[i] - 12;
+			}
+			int edges2_index = cantor(edges2Blocks,factorial_4);
+
+			ret = edges1_index * 24 + edges2_index;
+		
+		}
+		break;
 
 
 
@@ -211,39 +238,33 @@ int calculateIndex(vi state,int type){
 
 }
 
-void phase2_fill_heuristic(vi state,int8_t *dest,int destSize,vi factorial_n,int factorial_size,enum pahse_type type){
+void phase2_fill_heuristic(vi state,int8_t *dest,int destSize,enum pahse_type type){
 	queue<pair<vi,int>> q;
 	memset(dest,0xff,destSize);
 	q.push(make_pair(state,0));
 
 	dest[0] = 0;
 	if(type == phase2_edges2){
-		//state[28] = state[29] =state[30] =state[31] = 0;
 		phase2_edges2_all.push_back(state);
 	}
-	
 	int count = 0;
 	while(!q.empty()){ 
 		pair<vi ,int> front = q.front();
 		int fatherIndex =calculateIndex(front.first,type);
 		for( int move=0; move<18; move++ ){
-			if( applicableMoves[3] & (1 << move) ){			
+			if( moveLimit & (1 << move) ){			
 				vi currstate = applyMove(move, front.first);
 				int Index = calculateIndex(currstate,type);
-			//	printf("blockPosIndex : %d\n",blockPosIndex);
-				if(type == phase2_edges1){
-					phrase2_edges1_move[fatherIndex][move] = Index;
-				}else if(type == phase2_edges2){
-					phrase2_edges2_move[fatherIndex][move] = Index;
-				}else{
+				if(type == phase2_corners){
 					phrase2_corners_move[fatherIndex][move] = Index;
+				}else if(type == phase2_edges){
+					phrase2_edges_move[fatherIndex][move] = Index;
 				}
 				if(dest[Index] == -1){
 					int step = front.second;	
 					dest[Index] = step + 1;
 					q.push(make_pair(currstate,step+1));
 					if(type == phase2_edges2){
-					//	currstate[28] = currstate[29] =currstate[30] =currstate[31] = 0;
 						phase2_edges2_all.push_back(currstate);
 					}
 				}
@@ -253,22 +274,26 @@ void phase2_fill_heuristic(vi state,int8_t *dest,int destSize,vi factorial_n,int
 		q.pop();
 
 	}
+	if(type == phase2_edges2){
+		printf("phase2_edges2_all size %d\n",phase2_edges2_all.size());
+	}
+
 	printf("serch count %d \n",count);
 
 }
 /**/
-void phase1_fill_heuristic(vi goalstate,int8_t *dest,int destSize,vi power_n,int power_size,enum pahse_type type){
+void phase1_fill_heuristic(vi goalstate,int8_t *dest,int destSize,enum pahse_type type){
 	queue<pair<vi,int>> q;
 	//to do 初始化queue
 	memset(dest,0xff,destSize);
 	pair<vi ,int> firstPair(goalstate,0);
 	q.push(firstPair);
 	dest[0] = 0;
+	int count = 0;
 	while(!q.empty()){ 
 		pair<vi ,int> front = q.front();
 		// to do 复用
 		int fatherIndex =calculateIndex(front.first,type);
-		
 		for( int move=0; move<18; move++ ){
 			int step = front.second;
 			vi currstate = applyMove(move, front.first);
@@ -282,129 +307,40 @@ void phase1_fill_heuristic(vi goalstate,int8_t *dest,int destSize,vi power_n,int
 			if(dest[Index] == -1){
 				dest[Index] = step + 1;
 				q.push(make_pair(currstate,step+1));
-			}		
+			}	
+			count ++;
 		}
 		q.pop();
 
 	}
-
-}
-void test_phase1_fill_heuristic(vi goalstate,int8_t *dest,int destSize,vi power_n,int power_size,enum pahse_type type){
-	queue<pair<vi,int>> q;
-	//to do 初始化queue
-	memset(dest,0xff,destSize);
-	pair<vi ,int> firstPair(goalstate,0);
-	q.push(firstPair);
-	dest[0] = 0;
-	pair<vi ,int> front = q.front();
-	// to do 复用
-	int fatherIndex = 0;
-	vi fatherblockOrientation(front.first.begin() + 20 + type * 12,front.first.begin() + 28 + type * 12);	
-	for(int i = 0 ; i < power_size ; i++){
-		fatherIndex +=  fatherblockOrientation[i] *	power_n[i];
-	}
-	
-	for( int move=0; move<18; move++ ){
-		int step = front.second;
-		vi currstate = applyMove(move, front.first);
-		int Index = 0;
-		vi blockOrientation(currstate.begin() + 20 + type * 12,currstate.begin() + 28 + type * 12);	
-		for(int i = 0 ; i < power_size ; i++){
-			Index +=  blockOrientation[i] *	power_n[i];
-		}
-		
-	    if(type == phase1_co){
-			phase1_co_move[fatherIndex][move] = Index;
-			printf("fatherIndex %d Index %d move %d\n",fatherIndex,Index,move);
-		}else{
-			phase1_eo_move[fatherIndex][move] = Index;
-			printf("fatherIndex %d Index %d move %d\n",fatherIndex,Index,move);
-		}
-		if(dest[Index] == -1){
-			dest[Index] = step + 1;
-			q.push(make_pair(currstate,step+1));
-		}		
-	}
-	q.pop();
-
-	
-
+	printf("serch count %d \n",count);
 }
 
 //应该把其余八个棱块也考虑进来  
 void phase1_edges_fill_heuristic(vi state){
 	queue<pair<vi,int>> q;
-	//to do 初始化queue
 	memset(phrase1_edges,0xff,phrase1_edges_size);
 	pair<vi ,int> firstPair(state,0);
 	q.push(firstPair);
-	//printf("phase2_edges2_all size %d\n",phase2_edges2_all.size());
+	printf("phase2_edges2_all size %d\n",phase2_edges2_all.size());
 	for(int i = 0 ; i <phase2_edges2_all.size();i++){
 		q.push(make_pair(phase2_edges2_all[i],0));
-		vi initstate = phase2_edges2_all[i];
-		int Index = 0;
-		vi edgesPos(initstate.begin(),initstate.begin() + 12);
-		for(int i = 0 ; i < 12 ; i++){
-			if(!(edgesPos[i] >= 8)) edgesPos[i] =0;
-		}
-		Index = perm(edgesPos,factorial_12_4);
-		Index = Index * 16 ;
-		//printf("Index %d \n",Index);
+		int Index = calculateIndex(phase2_edges2_all[i], phase1_edges);
 		phrase1_edges[Index] = 0;
-		
-
 	}
 	while(!q.empty()){ 
 		pair<vi ,int> front = q.front();
-
-		//to do 复用
-		int FatherIndex = 0;
-		int FatherOrIndex = 0;
-		vi faedgesPos(front.first.begin(),front.first.begin() + 12);
-		for(int i = 0 ; i < 12 ; i++){
-			if(!(faedgesPos[i] >= 8)) faedgesPos[i] =0;
-		}		
-		FatherIndex = perm(faedgesPos,factorial_12_4);
-
-		
-		for(int i = 0 ; i < 12 ;i ++){
-			if((front.first)[i] >= 8){
-				FatherOrIndex +=  power2_8[ (front.first)[i] - 8 + 4] * (front.first)[i + 20] ;
-			}
-		}
-		FatherIndex = FatherIndex * 16 + FatherOrIndex;
-
-	
+		int FatherIndex = calculateIndex(front.first, phase1_edges);
 		for( int move=0; move<18; move++ ){
 			int step = front.second;
 			vi currstate = applyMove(move, front.first);
-			int Index = 0;
-			int OrIndex = 0;
-			vi edgesPos(currstate.begin(),currstate.begin() + 12);
-			for(int i = 0 ; i < 12 ; i++){
-				if(!(edgesPos[i] >= 8)) edgesPos[i] =0;
-			}		
-			Index = perm(edgesPos,factorial_12_4);
-
-			
-			for(int i = 0 ; i < 12 ;i ++){
-				if(currstate[i] >= 8){
-					OrIndex +=  power2_8[ currstate[i] - 8 + 4] * currstate[i + 20] ;
-				}
-			}
-			Index = Index * 16 + OrIndex;
-
+			int Index = calculateIndex(currstate, phase1_edges);
 			phase1_edges_move[FatherIndex][move] = Index;
-			
-
 			 if(phrase1_edges[Index] == -1)
 			 {
 			    phrase1_edges[Index] = step + 1;
-				//pair<vi,int> newpair(currstate,step + 1);
 				q.push(make_pair(currstate,step+1));
-				//printf("step count %d \n",step); 
 			 }
-
 		}
 		q.pop();
 	}
@@ -526,7 +462,6 @@ bool DFSphase1(search_t& se_t){
 				if(estimateval == 0){
 						return true;
 				}
-				
 				search_t newSe_t = se_t;
 				newSe_t.current_depth += 1;
 				newSe_t.face = move / 3;
@@ -546,15 +481,16 @@ bool DFSphase1(search_t& se_t){
 //int search_count = 0;
 bool DFSphase2(search_t& se_t){
 		for( int move=0; move<18; move++ ){
-			if( applicableMoves[3] & (1 << move) ){
+			if( moveLimit & (1 << move) ){
 			//	search_count ++;
 				if(move / 3 == se_t.face ) continue;
 				vi newstate = applyMove(move, se_t.state);
 				int estimateval = estimate(newstate,1);
 			//	int phase2_edges1_index = phrase2_edges1_move[se_t.phase2_edges1_index][move];
 			//	int phase2_edges2_index = phrase2_edges2_move[se_t.phase2_edges2_index][move];
+			//	int phase2_edges2_index = phrase2_edges_move[se_t.phase2_edges_index][move];
 			//	int phase2_corners_index = phrase2_corners_move[se_t.phase2_corners_index][move];
-			//	int estimateval = max(phrase2_edges1[phase2_edges1_index],max(phrase2_edges2[phase2_edges2_index],phrase2_corners[phase2_corners_index]));
+			//	int estimateval = max(phrase2_edges[phase2_edges2_index],phrase2_corners[phase2_corners_index]);
 				if(estimateval + se_t.current_depth + 1 <= se_t.total_depth){
 					(*se_t.steps)[se_t.current_depth] = move;
 					if(estimateval == 0){
@@ -563,9 +499,10 @@ bool DFSphase2(search_t& se_t){
 					}	
 					search_t newSe_t = se_t;
 					newSe_t.current_depth += 1;
-			//		newSe_t.phase2_edges1_index = phase2_corners_index;
-			//		newSe_t.phase2_edges2_index = phase2_edges2_index;
-			//		newSe_t.phase2_corners_index = phase2_corners_index;
+				//	newSe_t.phase2_edges1_index = phase2_corners_index;
+				//	newSe_t.phase2_edges2_index = phase2_edges2_index;
+				//	newSe_t.phase2_edges_index = phase2_edges2_index;
+				//	newSe_t.phase2_corners_index = phase2_corners_index;
 					newSe_t.state = newstate;
 					newSe_t.face = move / 3;
 					if(DFSphase2(newSe_t))
@@ -577,7 +514,40 @@ bool DFSphase2(search_t& se_t){
 		return false;
 	
 }
-
+bool phase2(vi   state,steps_t step){
+	for(int depth = 0 ;depth <= 10; ++depth){
+		printf("!!!!!!!!!!!!!!!!!!!!!depth %d \n",depth);
+		steps_t steps(depth);
+		search_t search;
+		search.face = 6;
+		search.state = state;
+		search.current_depth = 0;
+		search.total_depth = depth;
+		search.steps = &steps;
+	//	search.phase2_edges1_index = calculateIndex(state,phase2_edges1);
+	//	search.phase2_edges2_index = calculateIndex(state,phase2_edges2);
+	//	search.phase2_corners_index = calculateIndex(state,phase2_corners);
+	//	search.phase2_edges_index = calculateIndex(state,phase2_edges);
+		
+		if(DFSphase2(search)){
+			for( int i=0; i<depth; i++ ){
+				printf("  ");
+				int movesteps = (steps[i]%3+1);
+			
+				if(movesteps ==3){
+					cout << "UDFBLR"[steps[i]/3] << "'";
+				}else if(movesteps == 1){
+					cout << "UDFBLR"[steps[i]/3];
+				}else {
+					cout << "UDFBLR"[steps[i]/3] << steps[i]%3+1;
+				}
+			}
+			printf("\n");
+			return true;
+		}
+	}
+	return false;
+}
 bool phase(vi state){
 
 	for(int depth = 0 ; ; ++depth){
@@ -614,9 +584,6 @@ bool phase(vi state){
 			
 		}
 	}
-	/**/	
-	//int estimateval = estimate(state,1);
-	//printf("estimateval %d\n",estimateval);
 	/**/
 	for(int depth = 0 ;; ++depth){
 		printf("!!!!!!!!!!!!!!!!!!!!!depth %d \n",depth);
@@ -630,6 +597,7 @@ bool phase(vi state){
 	//	search.phase2_edges1_index = calculateIndex(state,phase2_edges1);
 	//	search.phase2_edges2_index = calculateIndex(state,phase2_edges2);
 	//	search.phase2_corners_index = calculateIndex(state,phase2_corners);
+	//	search.phase2_edges_index = calculateIndex(state,phase2_edges);
 		
 		if(DFSphase2(search)){
 			for( int i=0; i<depth; i++ ){
@@ -648,7 +616,7 @@ bool phase(vi state){
 			break;
 		}
 	}
-
+	
 }
 
 int main(int argc ,char **argv){
@@ -672,76 +640,32 @@ int main(int argc ,char **argv){
 		}
 	}
 
-
 	
-	phase2_fill_heuristic(goalState,phrase2_edges1,phrase2_edges1_size, factorial_8,8,phase2_edges1);
-	phase2_fill_heuristic(goalState,phrase2_edges2,phrase2_edges2_size, factorial_4,4,phase2_edges2);
-	phase2_fill_heuristic(goalState,phrase2_corners,phrase2_corners_size, factorial_8,8,phase2_corners);
-	//phase2_fill_edges(goalState);
-	//phase2_fill_cornors(goalState);
+	phase2_fill_heuristic(goalState,phrase2_edges1,phrase2_edges1_size,phase2_edges1);
+	phase2_fill_heuristic(goalState,phrase2_edges2,phrase2_edges2_size,phase2_edges2);
 
-	memset(phase1_co_move,-1,sizeof(int) * phrase1_co_size * MOVE_COUNT);
-	phase1_fill_heuristic(goalState,phrase1_co,phrase1_co_size,power3_8,8,phase1_co);
-	int co_initcount = 0;
-	int co_moveinitcount = 0;
-	for(int i = 0 ;i < phrase1_co_size;i ++){
-		for(int j= 0 ; j <MOVE_COUNT;j ++ ){
-			if(phase1_co_move[i][j] >= 0)
-				 co_moveinitcount++;
-		}
-		if(phrase1_co[i] != -1)
-			co_initcount ++;	
-		if(phrase1_co[i] == 1)
-			printf("step 1 index %d \n",i);	
-	}
-	printf("co_initcount %d co_moveinitcount %d\n",co_initcount,co_moveinitcount);
-	//printf("phase1_co_move[3939][8] %d \n",phase1_co_move[1347][8]);	
+	memset(phrase2_corners_move,-1,sizeof(int) * phrase2_corners_size * MOVE_COUNT_2);
+	phase2_fill_heuristic(goalState,phrase2_corners,phrase2_corners_size,phase2_corners);
 
-	
-	memset(phase1_eo_move,-1,sizeof(int) * phrase1_eo_size * MOVE_COUNT);
-	phase1_fill_heuristic(goalState,phrase1_eo,phrase1_eo_size,power2_12,12,phase1_eo);
-	int eo_initcount = 0;
-	int eo_moveinitcount = 0;
-	for(int i = 0 ;i < phrase1_eo_size ;i ++){
-		for(int j= 0 ; j <MOVE_COUNT;j ++ ){
-			if(phase1_eo_move[i][j] != -1)
-				eo_initcount ++;
-		}
-		if(phrase1_eo[i] != -1)
-			eo_moveinitcount++;
-		if(phrase1_eo[i] == 1)
-			printf("step 1 index %d \n",i);
+//	memset(phrase2_edges_move,-1,sizeof(int) * phrase2_edges_size * MOVE_COUNT_2);
+//	phase2_fill_heuristic(goalState,phrase2_edges,phrase2_edges_size,phase2_edges);
 
-	}
-	printf("eo_initcount %d eo_moveinitcount %d\n",eo_moveinitcount,eo_initcount);
-	//printf("phase1_eo_move[40][8] %d \n",phase1_eo_move[24][8]);
-	
-	
+
+
 	memset(phase1_edges_move,-1,sizeof(int) * phrase1_edges_size * MOVE_COUNT);
 	phase1_edges_fill_heuristic(goalState);
-	int edges_initcount = 0;
-	int edges_moveinitcount = 0;
-	for(int i = 0 ;i < phrase1_edges_size;i ++){
-		for(int j= 0 ; j <MOVE_COUNT;j ++ ){
-			if(phase1_edges_move[i][j] != -1)
-				edges_moveinitcount ++;
-		}
-		if(phrase1_edges[i] != -1 )
-			edges_initcount ++;
 
-	}
-	printf("edges_initcount %d edges_moveinitcount %d\n",edges_initcount,edges_moveinitcount);
-	//printf("phase1_edges_move[58576][12] %d \n",phase1_edges_move[58576][12]);	
+	memset(phase1_co_move,-1,sizeof(int) * phrase1_co_size * MOVE_COUNT);
+	phase1_fill_heuristic(goalState,phrase1_co,phrase1_co_size,phase1_co);
+	
+	memset(phase1_eo_move,-1,sizeof(int) * phrase1_eo_size * MOVE_COUNT);
+	phase1_fill_heuristic(goalState,phrase1_eo,phrase1_eo_size,phase1_eo);
+
+	
+
+	
 	
 	printf("------------------------------------------\n");
-
-
-
-
-
-	
-	//test_phase1_fill_heuristic(goalState,phrase1_co,phrase1_co_size,power3_8,8,phase1_co);
-	//test_phase1_fill_heuristic(goalState,phrase1_eo,phrase1_eo_size,power2_8,8,phase1_eo);
 
 	struct timeval timeEnd, timeStart; 
 	gettimeofday(&timeStart, NULL );	
