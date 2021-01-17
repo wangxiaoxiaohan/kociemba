@@ -88,6 +88,7 @@ enum pahse_type{
 struct search_t
 {
 	vi state;
+	vi initstate;
 	int  face, total_depth,current_depth;
 	steps_t* steps;
 	int phase1_co_index;
@@ -439,44 +440,7 @@ long long total_time_applymove;
 long long total_time_estmate;
 
 
-bool DFSphase1(search_t& se_t){
 
-		for( int move=0; move<18; move++ ){
-			if(move / 3 == se_t.face ) continue;
-			//struct timeval timeEnd, timeMid,timeStart; 
-			//gettimeofday(&timeStart, NULL );
-			//vi newstate = applyMove(move, se_t.state);
-			//gettimeofday(&timeMid, NULL );
-			//int estimateval = estimate(newstate,0);
-			//gettimeofday(&timeEnd, NULL );
-			//total_time_applymove += (timeMid.tv_sec - timeStart.tv_sec) * 1000000 + (timeMid.tv_usec - timeStart.tv_usec); 
-			//total_time_estmate += (timeEnd.tv_sec - timeMid.tv_sec) * 1000000 + (timeEnd.tv_usec - timeMid.tv_usec); 
-			int phase1_co_index = phase1_co_move[se_t.phase1_co_index][move];
-			int phase1_eo_index = phase1_eo_move[se_t.phase1_eo_index][move];
-			int phase1_edges_index = phase1_edges_move[se_t.phase1_edges_index][move];
-			
-			int estimateval = max(max(phrase1_co[phase1_co_index],phrase1_eo[phase1_eo_index]),phrase1_edges[phase1_edges_index]); 
-			//printf("%d %d %d %d %d  %d %d move %d\n",phase1_co_index,phrase1_co[phase1_co_index],phase1_eo_index,phrase1_eo[phase1_eo_index],phase1_edges_index,phrase1_edges[phase1_edges_index],estimateval,move);
-			if(estimateval + se_t.current_depth + 1 <= se_t.total_depth){
-				(*se_t.steps)[se_t.current_depth] = move;
-				if(estimateval == 0){
-						return true;
-				}
-				search_t newSe_t = se_t;
-				newSe_t.current_depth += 1;
-				newSe_t.face = move / 3;
-			//	newSe_t.state = newstate;
-				newSe_t.phase1_co_index = phase1_co_index;
-				newSe_t.phase1_eo_index = phase1_eo_index;
-				newSe_t.phase1_edges_index = phase1_edges_index;
-				if(DFSphase1(newSe_t))
-					return true;			
-			} 
-		}
-			
-		return false;
-	
-}
 
 //int search_count = 0;
 bool DFSphase2(search_t& se_t){
@@ -514,26 +478,26 @@ bool DFSphase2(search_t& se_t){
 		return false;
 	
 }
-bool phase2(vi   state,steps_t step){
+int phase1_done = 0;
+
+bool phase2(vi   state,steps_t steps){
+	for( int i=0; i<steps.size(); i++ ){
+		state = applyMove(steps[i], state);
+	}
 	for(int depth = 0 ;depth <= 10; ++depth){
-		printf("!!!!!!!!!!!!!!!!!!!!!depth %d \n",depth);
-		steps_t steps(depth);
+		steps_t steps2(depth);
 		search_t search;
 		search.face = 6;
 		search.state = state;
 		search.current_depth = 0;
 		search.total_depth = depth;
-		search.steps = &steps;
-	//	search.phase2_edges1_index = calculateIndex(state,phase2_edges1);
-	//	search.phase2_edges2_index = calculateIndex(state,phase2_edges2);
-	//	search.phase2_corners_index = calculateIndex(state,phase2_corners);
-	//	search.phase2_edges_index = calculateIndex(state,phase2_edges);
-		
-		if(DFSphase2(search)){
-			for( int i=0; i<depth; i++ ){
+		search.steps = &steps2;
+	
+		if(DFSphase2(search) && (steps.size() + steps2.size()) <= 21){
+			
+			for( int i=0; i<steps.size(); i++ ){
 				printf("  ");
 				int movesteps = (steps[i]%3+1);
-			
 				if(movesteps ==3){
 					cout << "UDFBLR"[steps[i]/3] << "'";
 				}else if(movesteps == 1){
@@ -542,12 +506,68 @@ bool phase2(vi   state,steps_t step){
 					cout << "UDFBLR"[steps[i]/3] << steps[i]%3+1;
 				}
 			}
+			printf("      ");
+			for( int i=0; i<depth; i++ ){
+				printf("  ");
+				int movesteps = (steps2[i]%3+1);
+				if(movesteps ==3){
+					cout << "UDFBLR"[steps2[i]/3] << "'";
+				}else if(movesteps == 1){
+					cout << "UDFBLR"[steps2[i]/3];
+				}else {
+					cout << "UDFBLR"[steps2[i]/3] << steps2[i]%3+1;
+				}
+			}
 			printf("\n");
+			printf("phase1_done count %d",phase1_done);
 			return true;
 		}
 	}
 	return false;
 }
+bool DFSphase1(search_t& se_t){
+
+		for( int move=0; move<18; move++ ){
+			if(move / 3 == se_t.face ) continue;
+			//struct timeval timeEnd, timeMid,timeStart; 
+			//gettimeofday(&timeStart, NULL );
+			//vi newstate = applyMove(move, se_t.state);
+			//gettimeofday(&timeMid, NULL );
+			//int estimateval = estimate(newstate,0);
+			//gettimeofday(&timeEnd, NULL );
+			//total_time_applymove += (timeMid.tv_sec - timeStart.tv_sec) * 1000000 + (timeMid.tv_usec - timeStart.tv_usec); 
+			//total_time_estmate += (timeEnd.tv_sec - timeMid.tv_sec) * 1000000 + (timeEnd.tv_usec - timeMid.tv_usec); 
+			int phase1_co_index = phase1_co_move[se_t.phase1_co_index][move];
+			int phase1_eo_index = phase1_eo_move[se_t.phase1_eo_index][move];
+			int phase1_edges_index = phase1_edges_move[se_t.phase1_edges_index][move];
+			
+			int estimateval = max(max(phrase1_co[phase1_co_index],phrase1_eo[phase1_eo_index]),phrase1_edges[phase1_edges_index]); 
+			//printf("%d %d %d %d %d  %d %d move %d\n",phase1_co_index,phrase1_co[phase1_co_index],phase1_eo_index,phrase1_eo[phase1_eo_index],phase1_edges_index,phrase1_edges[phase1_edges_index],estimateval,move);
+			if(estimateval + se_t.current_depth + 1 <= se_t.total_depth){
+				(*se_t.steps)[se_t.current_depth] = move;
+				if(estimateval == 0){
+					phase1_done ++;
+					if(phase2(se_t.initstate,*se_t.steps))	
+						return true;
+				}
+				search_t newSe_t = se_t;
+				newSe_t.current_depth += 1;
+				newSe_t.face = move / 3;
+			//	newSe_t.state = newstate;
+				newSe_t.phase1_co_index = phase1_co_index;
+				newSe_t.phase1_eo_index = phase1_eo_index;
+				newSe_t.phase1_edges_index = phase1_edges_index;
+				if(DFSphase1(newSe_t)){
+						return true;
+				}
+								
+			} 
+		}
+			
+		return false;
+	
+}
+
 bool phase(vi state){
 
 	for(int depth = 0 ; ; ++depth){
@@ -557,6 +577,7 @@ bool phase(vi state){
 
 		search.face = 6;
 		//search.state = state;
+		search.initstate =state;
 		search.current_depth = 0;
 		search.total_depth = depth;
 		search.steps = &steps;
@@ -565,26 +586,10 @@ bool phase(vi state){
 		//printf("search.phase1_eo_index %d\n",search.phase1_eo_index);
 		search.phase1_edges_index = calculateIndex(state,phase1_edges);
 
-		if(DFSphase1(search)){
-			for( int i=0; i<depth; i++ ){
-				printf("  ");
-				int movesteps = (steps[i]%3+1);
-			
-				if(movesteps ==3){
-					cout << "UDFBLR"[steps[i]/3] << "'";
-				}else if(movesteps == 1){
-					cout << "UDFBLR"[steps[i]/3];
-				}else {
-					cout << "UDFBLR"[steps[i]/3] << steps[i]%3+1;
-				}
-				state = applyMove(steps[i], state);
-			}
-			printf("\n");
+		if(DFSphase1(search))
 			break;
-			
-		}
 	}
-	/**/
+	/*
 	for(int depth = 0 ;; ++depth){
 		printf("!!!!!!!!!!!!!!!!!!!!!depth %d \n",depth);
 		steps_t steps(depth);
@@ -616,7 +621,7 @@ bool phase(vi state){
 			break;
 		}
 	}
-	
+	*/
 }
 
 int main(int argc ,char **argv){
