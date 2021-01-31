@@ -49,7 +49,7 @@ int8_t phase1_pre_edges[phrase1_eo_size * phase1_middle_edges_combation];
 
 
 
-int8_t phrase2_corners[phrase2_corners_size ];
+int8_t phrase2_corners[phrase2_corners_size];
 int8_t phrase2_edges1[phrase2_edges1_size];
 int8_t phrase2_edges2[phrase2_edges2_size];
 
