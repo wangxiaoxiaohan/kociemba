@@ -14,8 +14,6 @@
 using namespace std;
 
 /*需要优化的地方 ：
-  1.优先：做类解决内存覆盖问题	
-  3.phase1 phase2 api合并
   4.启发表写文件
   5.做一个cube 结构体
 */
@@ -50,16 +48,14 @@ int8_t phase1_pre_edges[phrase1_eo_size * phase1_middle_edges_combation];
 
 
 
+
 int8_t phrase2_corners[phrase2_corners_size ];
 int8_t phrase2_edges1[phrase2_edges1_size];
 int8_t phrase2_edges2[phrase2_edges2_size];
 
-
 int phrase2_corners_move[phrase2_corners_size ][MOVE_COUNT];
 int phrase2_edges1_move[phrase2_edges1_size ][MOVE_COUNT];
 int phrase2_edges2_move[phrase2_edges2_size][MOVE_COUNT];
-
-
 
 int8_t phase2_pre_corners[phrase2_edges2_size *  phrase2_corners_size];
 int8_t phase2_pre_edges[phrase2_edges2_size *  phrase2_edges1_size];
@@ -83,6 +79,9 @@ static vi factorial_12_4 = {1,9,90,990};
 static vi power2_8 = {128,64,32,16,8,4,2,1};
 static vi power2_12 = {2048,1024,512,256,128,64,32,16,8,4,2,1};
 static vi power3_8 = {2187,729,243,81,27,9,3,1};
+
+int phase1_done = 0;
+long long total_timePhase2;
 
 
 enum pahse_type{
@@ -540,7 +539,7 @@ bool DFSphase2(search_t& se_t){
 		return false;
 	
 }
-int phase1_done = 0;
+
 
 bool phase2(vi   state,steps_t steps){
 	for( int i=0; i<steps.size(); i++ ){
@@ -557,7 +556,7 @@ bool phase2(vi   state,steps_t steps){
 		search.total_depth = depth;
 		search.steps = &steps2;
 	
-		if(DFSphase2(search) && (steps.size() + steps2.size()) <= 21){
+		if(DFSphase2(search) && (steps.size() + steps2.size()) <= 20){
 			
 			printSolution(steps);
 			printf("      ");
@@ -569,7 +568,7 @@ bool phase2(vi   state,steps_t steps){
 	}
 	return false;
 }
-long long total_timePhase2; 
+ 
 
 bool DFSphase1(search_t& se_t){
 
@@ -687,8 +686,7 @@ int main(int argc ,char **argv){
 	gettimeofday( &timeEnd, NULL ); 
 	long long total_time = (timeEnd.tv_sec - timeStart.tv_sec) * 1000000 + (timeEnd.tv_usec - timeStart.tv_usec); 
 	printf("total time is %lld ms\n", total_time/1000);
-	printf("total_timePhase2is %lld us\n", total_timePhase2);
-	//printf("total_time_applymove is %lld ms\n", total_time_applymove/1000);
-	//printf("total_time_estmate is %lld ms\n", total_time_estmate/1000);
+//	printf("total_timePhase2is %lld us\n", total_timePhase2);
+
 
 }
