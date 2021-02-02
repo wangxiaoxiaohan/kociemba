@@ -1,4 +1,4 @@
-#include <iostream>
+  #include <iostream>
 #include <string>
 #include <vector>
 #include <map>
@@ -30,8 +30,8 @@ static const int phrase2_edges1_size = 40320;  // 8!
 static const int phrase2_edges2_size = 24;	   // 4!
 
 static const int phrase1_edges_size = 12 * 11 * 10 * 9;
-static const int phrase1_co_size = 6561;
-static const int phrase1_eo_size = 4096;
+static const int phrase1_co_size = 2187;
+static const int phrase1_eo_size = 2048;
 
 static const int phase1_middle_edges_combation = 495;//C(12,4)
 
@@ -76,9 +76,6 @@ int affectedCubies[][8] = {
 static vi factorial_8 ={1,2,6,24,120,720,5040,40320};
 static vi factorial_4 ={1,2,6,24};
 static vi factorial_12_4 = {1,9,90,990};
-static vi power2_8 = {128,64,32,16,8,4,2,1};
-static vi power2_12 = {2048,1024,512,256,128,64,32,16,8,4,2,1};
-static vi power3_8 = {2187,729,243,81,27,9,3,1};
 
 int phase1_done = 0;
 long long total_timePhase2;
@@ -195,19 +192,23 @@ void printSolution(steps_t steps){
 int calculateIndex(vi state,int type){
 	int ret = 0;
 	switch(type){
+		//根据魔方的性质 一个合法的魔方状态 块的方向并不能随意组合 当前除了某一个块的其他块方向已经定下来的时候
+		//个块方向就是确定的,因此不要需要考虑全部块的方向 角块考虑 7 个 棱块考虑 11个 你可以随意选一个作为不考虑对象
+		//这里我将编号的最后一个块作为不考虑的对象
 		case phase1_co :
 		{
-			vi co(state.begin() + 32,state.begin() + 40);
+			vi co(state.begin() + 32,state.begin() + 39);
 			for(int i = 0 ; i < co.size();i++){
-				ret += power3_8[i] * co[i];
+				ret = ret * 3 + co[i];
 			}
 		}
 		break;
+
 		case phase1_eo:
 		{
-			vi eo(state.begin() + 20,state.begin() + 32);
+			vi eo(state.begin() + 20,state.begin() + 31);
 			for(int i = 0 ; i < eo.size();i++){
-				ret += power2_12[i] * eo[i];
+				ret = ret * 2 + eo[i];
 			}
 		}
 		break;
@@ -234,7 +235,6 @@ int calculateIndex(vi state,int type){
 			permu_Index = cantor(middle_edges,factorial_4);
 			ret = combina_index * 24 + permu_Index;
 			//printf("permu_Index %d combina_index %d ret %d\n",permu_Index,combina_index,ret);
-			/**/
 			/*
 			for(int i = 0; i < 12;i++){
 				if(edges_blockPosition[i] < 8){
@@ -263,7 +263,6 @@ int calculateIndex(vi state,int type){
 		break;
 		case phase2_corners:
 		{
-
 			vi cornorBlocks(state.begin() +  12 ,state.begin() + 20);
 			for(int i = 0 ;i < cornorBlocks.size(); i++){
 				cornorBlocks[i] = cornorBlocks[i] - 12;
@@ -316,9 +315,9 @@ void phase2_fill_heuristic(vi state,int8_t *dest,int destSize,enum pahse_type ty
 
 	}
 	if(type == phase2_edges2){
-		printf("phase2_edges2_all size %d\n",phase2_edges2_all.size());
+		//printf("phase2_edges2_all size %d\n",phase2_edges2_all.size());
 	}
-	printf("serch count %d \n",count);
+	printf("phase2 type %d serch count %d \n",type,count);
 
 }
 
@@ -412,7 +411,7 @@ void phase1_fill_heuristic(vi goalstate,int8_t *dest,int destSize,enum pahse_typ
 		q.pop();
 
 	}
-	printf("serch count %d \n",count);
+	printf("phase1 type: %d serch count %d \n",type,count);
 }
 
 //应该把其余八个棱块也考虑进来  
@@ -421,7 +420,7 @@ void phase1_edges_fill_heuristic(vi state){
 	memset(phrase1_edges,0xff,phrase1_edges_size);
 	pair<vi ,int> firstPair(state,0);
 	q.push(firstPair);
-	printf("phase2_edges2_all size %d\n",phase2_edges2_all.size());
+	int count = 0 ;
 	for(int i = 0 ; i <phase2_edges2_all.size();i++){
 		q.push(make_pair(phase2_edges2_all[i],0));
 		int Index = calculateIndex(phase2_edges2_all[i], phase1_edges);
@@ -441,15 +440,12 @@ void phase1_edges_fill_heuristic(vi state){
 			    phrase1_edges[Index] = step + 1;
 				q.push(make_pair(currstate,step+1));
 			 }
+			 count++;
 		}
 		q.pop();
 	}
-	int count = 0 ;
-	for(int i = 0 ; i < phrase1_edges_size; i++){
-		if(phrase1_edges[i] == -1)
-			count ++;
-	}
-	printf("count %d\n",count);
+	
+	printf("phase1 type: %d serch count %d \n",(int)phase1_edges,count);
 }
 void phase1_fill_pre(){
 	int searchcount = 0;
