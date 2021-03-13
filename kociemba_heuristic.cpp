@@ -13,11 +13,6 @@
 
 using namespace std;
 
-/*需要优化的地方 ：
-  4.启发表写文件
-  5.做一个cube 结构体
-*/
-
 typedef vector<int> vi;
 typedef vi steps_t; 
 vector<vi> phase2_edges2_all;
@@ -275,7 +270,6 @@ int calculateIndex(vi state,int type){
 	return ret;
 
 }
-
 void phase2_fill_heuristic(vi state,int8_t *dest,int destSize,enum pahse_type type){
 	queue<pair<vi,int>> q;
 	memset(dest,0xff,destSize);
@@ -290,9 +284,12 @@ void phase2_fill_heuristic(vi state,int8_t *dest,int destSize,enum pahse_type ty
 		pair<vi ,int> front = q.front();
 		int fatherIndex =calculateIndex(front.first,type);
 		for( int move=0; move<18; move++ ){
-			if( moveLimit & (1 << move) ){			
-				vi currstate = applyMove(move, front.first);
+			if( moveLimit & (1 << move) ){		
+
+				vi currstate = applyMove(move, front.first);			
 				int Index = calculateIndex(currstate,type);
+
+				
 				if(type == phase2_corners){
 					phrase2_corners_move[fatherIndex][move] = Index;
 				}else if(type == phase2_edges1){
@@ -379,8 +376,6 @@ void phase2_fill_pre(){
 	printf("searchcount %d\n",searchcount);
 
 }
-
-/**/
 void phase1_fill_heuristic(vi goalstate,int8_t *dest,int destSize,enum pahse_type type){
 	queue<pair<vi,int>> q;
 	//to do 初始化queue
@@ -391,7 +386,6 @@ void phase1_fill_heuristic(vi goalstate,int8_t *dest,int destSize,enum pahse_typ
 	int count = 0;
 	while(!q.empty()){ 
 		pair<vi ,int> front = q.front();
-		// to do 复用
 		int fatherIndex =calculateIndex(front.first,type);
 		for( int move=0; move<18; move++ ){
 			int step = front.second;
@@ -413,8 +407,6 @@ void phase1_fill_heuristic(vi goalstate,int8_t *dest,int destSize,enum pahse_typ
 	}
 	printf("phase1 type: %d serch count %d \n",type,count);
 }
-
-//应该把其余八个棱块也考虑进来  
 void phase1_edges_fill_heuristic(vi state){
 	queue<pair<vi,int>> q;
 	memset(phrase1_edges,0xff,phrase1_edges_size);
@@ -509,7 +501,7 @@ bool DFSphase2(search_t& se_t){
 		for( int move=0; move<18; move++ ){
 			if( moveLimit & (1 << move) ){
 			//	search_count ++;
-				if(move / 3 == se_t.face ) continue;
+				if(move / 3 == se_t.face || move / 3  == se_t.face - 1) continue;
 				int phase2_edges1_index = phrase2_edges1_move[se_t.phase2_edges1_index][move];
 				int phase2_edges2_index = phrase2_edges2_move[se_t.phase2_edges2_index][move];
 				int phase2_corners_index = phrase2_corners_move[se_t.phase2_corners_index][move];
@@ -541,7 +533,8 @@ bool phase2(vi   state,steps_t steps){
 	for( int i=0; i<steps.size(); i++ ){
 		state = applyMove(steps[i], state);
 	}
-	for(int depth = 0 ;depth <= 10; ++depth){
+	int step2_len = (20 - steps.size()) > 10 ? 10 : ( 20 - steps.size());
+	for(int depth = 0 ;depth <= step2_len; ++depth){
 		steps_t steps2(depth);
 		search_t search;
 		search.face = 6;
@@ -552,7 +545,7 @@ bool phase2(vi   state,steps_t steps){
 		search.total_depth = depth;
 		search.steps = &steps2;
 	
-		if(DFSphase2(search) && (steps.size() + steps2.size()) <= 20){
+		if(DFSphase2(search)){
 			
 			printSolution(steps);
 			printf("      ");
@@ -564,7 +557,6 @@ bool phase2(vi   state,steps_t steps){
 	}
 	return false;
 }
- 
 
 bool DFSphase1(search_t& se_t){
 
@@ -581,15 +573,9 @@ bool DFSphase1(search_t& se_t){
 			if(estimateval + se_t.current_depth + 1 <= se_t.total_depth){
 				(*se_t.steps)[se_t.current_depth] = move;
 				if(estimateval == 0){
-					phase1_done ++;
-			
-				//	struct timeval timeEnd, timeStart; 
-				//	gettimeofday(&timeStart, NULL );	 
+					phase1_done ++; 
 					if(phase2(se_t.initstate,*se_t.steps))	
 						return true;
-				//	gettimeofday( &timeEnd, NULL ); 
-				//	total_timePhase2  += (timeEnd.tv_sec - timeStart.tv_sec) * 1000000 + (timeEnd.tv_usec - timeStart.tv_usec);
-					//printf("total_timePhase2is %lld ms\n", total_timePhase2/1000);
 
 					
 				}
@@ -653,10 +639,16 @@ int main(int argc ,char **argv){
 	}
 
 
-	
+	memset(phrase2_edges1_move,0xff,sizeof(int) * phrase2_edges1_size * MOVE_COUNT);
 	phase2_fill_heuristic(goalState,phrase2_edges1,phrase2_edges1_size,phase2_edges1);
+
+	memset(phrase2_edges2_move,0xff,sizeof(int) * phrase2_edges2_size * MOVE_COUNT);
 	phase2_fill_heuristic(goalState,phrase2_edges2,phrase2_edges2_size,phase2_edges2);
+
+	memset(phrase2_corners_move,0xff,sizeof(int) * phrase2_corners_size * MOVE_COUNT);
 	phase2_fill_heuristic(goalState,phrase2_corners,phrase2_corners_size,phase2_corners);
+
+
 
 
 	memset(phase1_edges_move,0xff,sizeof(int) * phrase1_edges_size * MOVE_COUNT);
@@ -672,17 +664,18 @@ int main(int argc ,char **argv){
 	phase1_fill_pre();
 	
 	printf("------------------------------------------\n");
+
+
 	struct timeval timeEnd, timeStart; 
 	gettimeofday(&timeStart, NULL );	
 
 
-
 	phase(currentState);
-
+	
 	gettimeofday( &timeEnd, NULL ); 
 	long long total_time = (timeEnd.tv_sec - timeStart.tv_sec) * 1000000 + (timeEnd.tv_usec - timeStart.tv_usec); 
-	printf("total time is %lld ms\n", total_time/1000);
-//	printf("total_timePhase2is %lld us\n", total_timePhase2);
+	printf("total time is %lld us\n", total_time);
+
 
 
 }
