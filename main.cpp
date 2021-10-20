@@ -5,6 +5,7 @@
 #include "search.h"
 #include <memory>
 #include <sys/time.h>   
+#include <iostream> 
 
 std::map<std::string,int> str2move{
 	{"U",0},{"U2",1},{"U'",2},
@@ -33,7 +34,7 @@ int main(int argc ,char **argv){
 	
 	gettimeofday( &timeEnd, NULL ); 
 	long long total_time = (timeEnd.tv_sec - timeStart.tv_sec) * 1000000 + (timeEnd.tv_usec - timeStart.tv_usec); 
-	printf("total time is %lld us\n", total_time);
+	std::cout<< "total time is us " << total_time << std::endl;
 	
 }
 

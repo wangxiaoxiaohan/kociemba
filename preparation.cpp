@@ -4,9 +4,7 @@
 #include <queue>
 #include <iostream> 
 
-std::vector<cube_t> phase2_edges2_all;
-
-
+std::vector<cube_t> middle_edges_perms;
 static int factorial_8[8] = {1,2,6,24,120,720,5040,40320};
 static int factorial_4[4] ={1,2,6,24};
 static int factorial_12_4[4] = {1,9,90,990};
@@ -80,6 +78,8 @@ void prepareSearch::init(){
 	memset(edges_orientation_move,0xff,sizeof(int) * EDGES_ORIENTATION_SIZE * MOVE_COUNT);
 	phase1_fill_heuristic(cube,edges_orientation,EDGES_ORIENTATION_SIZE,phase1_eo);
 
+
+
 	phase2_fill_pre();
 	phase1_fill_pre();
 	
@@ -147,7 +147,7 @@ void prepareSearch::phase2_fill_heuristic(cube_t cube,int8_t *dest,int destSize,
 
 	dest[0] = 0;
 	if(type == phase2_edges2){
-		phase2_edges2_all.push_back(cube);
+		middle_edges_perms.push_back(cube);
 	}
 	int count = 0;
 	while(!q.empty()){ 
@@ -172,7 +172,7 @@ void prepareSearch::phase2_fill_heuristic(cube_t cube,int8_t *dest,int destSize,
 					dest[Index] = step + 1;
 					q.push(std::make_pair(current,step+1));
 					if(type == phase2_edges2){
-						phase2_edges2_all.push_back(current);
+						middle_edges_perms.push_back(current);
 					}
 				}
 				count ++;
@@ -214,7 +214,6 @@ void prepareSearch::phase2_fill_pre(){
 		q.pop();
 	}
 
-	printf("searchcount %d\n",searchcount);
 	memset(ep_mep,0xff,sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE *  UD_EDGES_PERM_SIZE);
 	std::queue<std::pair<phase2_pru_t,int>> q2;
 	phase2_pru_t first_t2;
@@ -239,12 +238,10 @@ void prepareSearch::phase2_fill_pre(){
 		}
 		q2.pop();
 	}
-	printf("searchcount %d\n",searchcount);
 
 }
 void prepareSearch::phase1_fill_heuristic(cube_t goalstate,int8_t *dest,int destSize,enum pahse_type type){
 	std::queue<std::pair<cube_t,int>> q;
-	//to do 初始化queue
 	memset(dest,0xff,destSize);
 	std::pair<cube_t ,int> firstPair(goalstate,0);
 	q.push(firstPair);
@@ -271,8 +268,6 @@ void prepareSearch::phase1_fill_heuristic(cube_t goalstate,int8_t *dest,int dest
 		q.pop();
 
 	}
-	
-	printf("phase1 type: %d serch count %d \n",type,count);
 }
 void prepareSearch::phase1_edges_fill_heuristic(cube_t state){
 	std::queue<std::pair<cube_t,int>> q;
@@ -280,10 +275,9 @@ void prepareSearch::phase1_edges_fill_heuristic(cube_t state){
 	std::pair<cube_t ,int> firstPair(state,0);
 	q.push(firstPair);
 	int count = 0 ;
-	for(int i = 0 ; i <phase2_edges2_all.size();i++){
-		q.push(std::make_pair(phase2_edges2_all[i],0));
-		int Index = calculateIndex(phase2_edges2_all[i], phase1_edges);
-		//printf("Index :%d\n",Index);
+	for(int i = 0 ; i <middle_edges_perms.size();i++){
+		q.push(std::make_pair(middle_edges_perms[i],0));
+		int Index = calculateIndex(middle_edges_perms[i], phase1_edges);
 		middle_edges_perm_orientation[Index] = 0;
 	}
 	while(!q.empty()){ 
@@ -293,11 +287,9 @@ void prepareSearch::phase1_edges_fill_heuristic(cube_t state){
 			int step = front.second;
 			cube_t currstate = cubeState::moveRotate(move, front.first);
 			int Index = calculateIndex(currstate, phase1_edges);
-			//printf("phase1_edges Index %d\n",Index);
 			middle_edges_perm_orientation_move[FatherIndex][move] = Index;
 			 if(middle_edges_perm_orientation[Index] == -1)
 			 {
-			 	//printf("index %d \n",Index);
 			    middle_edges_perm_orientation[Index] = step + 1;
 				q.push(std::make_pair(currstate,step+1));
 			 }
@@ -305,8 +297,6 @@ void prepareSearch::phase1_edges_fill_heuristic(cube_t state){
 		}
 		q.pop();
 	}
-
-	printf("phase1 type: %d serch count %d \n",(int)phase1_edges,count);
 }
 void prepareSearch::phase1_fill_pre(){
 	int searchcount = 0;
@@ -332,7 +322,6 @@ void prepareSearch::phase1_fill_pre(){
 		}
 		q.pop();
 	}
-	printf("searchcount %d\n",searchcount);
 
 
 	searchcount = 0;
@@ -358,23 +347,21 @@ void prepareSearch::phase1_fill_pre(){
 		}
 		q2.pop();
 	}
-	printf("searchcount %d\n",searchcount);
 
 
 }
 bool prepareSearch::DFSphase2(search_t& se_t){
 		for( int move=0; move<18; move++ ){
 			if( MOVELIMIT & (1 << move) ){
-			//	search_count ++;
 				if(move / 3 == se_t.face || move / 3  == se_t.face - 1) continue;
 				int phase2_edges1_index = ud_edges_perm_move[se_t.phase2_edges1_index][move];
 				int phase2_edges2_index = middle_edges_perm_move[se_t.phase2_edges2_index][move];
 				int phase2_corners_index = corners_perm_move[se_t.phase2_corners_index][move];
-				//int estimateval = max(ud_edges_perm[phase2_edges1_index],max(middle_edges_perm_orientation_move[phase2_edges2_index],corners_perm[phase2_corners_index]));
-				int estimateval =std::max(ep_mep[phase2_edges1_index * 24 + phase2_edges2_index],cp_mep[phase2_corners_index * 24 +phase2_edges2_index] 	);
-				if(estimateval + se_t.current_depth + 1 <= se_t.total_depth){
+				//int val = max(ud_edges_perm[phase2_edges1_index],max(middle_edges_perm_orientation_move[phase2_edges2_index],corners_perm[phase2_corners_index]));
+				int val =std::max(ep_mep[phase2_edges1_index * 24 + phase2_edges2_index],cp_mep[phase2_corners_index * 24 +phase2_edges2_index] 	);
+				if(val + se_t.current_depth + 1 <= se_t.total_depth){
 					(*se_t.steps)[se_t.current_depth] = move;
-					if(estimateval == 0){
+					if(val == 0){
 							return true;
 					}	
 					search_t newSe_t = se_t;
@@ -411,11 +398,10 @@ bool prepareSearch::phase2(cube_t    cube,steps_t steps){
 		search.steps = &steps2;
 	
 		if(DFSphase2(search)){
-			
 			printSolution(steps);
-			printf("   \n");
+			std::cout << std::endl;
 			printSolution(steps2);	
-			printf("\n");
+			std::cout << std::endl;
 			return true;
 		}
 	}
@@ -431,12 +417,12 @@ bool prepareSearch::DFSphase1(search_t& se_t){
 			int phase1_eo_index = edges_orientation_move[se_t.phase1_eo_index][move];
 			int phase1_edges_index = middle_edges_perm_orientation_move[se_t.phase1_edges_index][move];
 			
-			//int estimateval = std::max(std::max(cornors_orientation[phase1_co_index],edges_orientation[phase1_eo_index]),middle_edges_perm_orientation[phase1_edges_index]); 
-			int estimateval =std::max(co_mec[MIDDLE_EDGES_COMBINATION * phase1_co_index + phase1_edges_index/24],
+			//int val = std::max(std::max(cornors_orientation[phase1_co_index],edges_orientation[phase1_eo_index]),middle_edges_perm_orientation[phase1_edges_index]); 
+			int val = std::max(co_mec[MIDDLE_EDGES_COMBINATION * phase1_co_index + phase1_edges_index/24],
 								 eo_mec[MIDDLE_EDGES_COMBINATION * phase1_eo_index   + phase1_edges_index/24]);
-			if(estimateval + se_t.current_depth + 1 <= se_t.total_depth){
+			if(val + se_t.current_depth + 1 <= se_t.total_depth){
 				(*se_t.steps)[se_t.current_depth] = move;
-				if(estimateval == 0){
+				if(val == 0){
 					if(phase2(se_t.initstate,*se_t.steps))	
 						return true;
 				}
@@ -460,7 +446,6 @@ bool prepareSearch::DFSphase1(search_t& se_t){
 bool prepareSearch::phase(cube_t cube){
 
 	for(int depth = 0 ; ; ++depth){
-		printf("!!!!!!!!!!!!!!!!!!!!!depth %d\n",depth);
 		steps_t steps(depth);
 		search_t search;
 
@@ -473,13 +458,13 @@ bool prepareSearch::phase(cube_t cube){
 		search.phase1_eo_index = calculateIndex(cube,phase1_eo);
 		search.phase1_edges_index = calculateIndex(cube,phase1_edges);
 
-		if(DFSphase1(search))
+ 		if(DFSphase1(search))
 			break;
 	}
 }
 void prepareSearch::printSolution(steps_t steps){
-	for( int i=0; i<steps.size(); i++ ){
-		printf("  ");
+	for( int i = 0; i < steps.size(); i++ ){
+		std::cout << " ";
 		int movesteps = (steps[i]%3+1);
 		if(movesteps ==3){
 			std::cout << "UDFBLR"[steps[i]/3] << "'";
