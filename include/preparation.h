@@ -38,8 +38,9 @@ public:
 	void printSolution(steps_t steps);
 	
 private:
-	void writeCache();
-	void readCache();
+	void writeCache(const char *cachePath);
+	void readCache(const char *cachePath);
+
 	//phase1 完成的状态(1.棱块方向全部归位 2。角块方向全部归位 3 中层四个棱块都在中层，以下三个数组分别对应)
 	int8_t cornors_orientation[CORNORS_ORIENTATION_SIZE];//角块方向 只考虑7个即可，若7个方向已经定下来 剩下一个也就是已知的
 	int8_t edges_orientation[EDGES_ORIENTATION_SIZE];//棱块方向同理 只考虑11个即可

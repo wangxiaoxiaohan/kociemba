@@ -59,17 +59,16 @@ prepareSearch::prepareSearch(){
 	char path[128];
 	sprintf(path,"%s/cacheFile",buf);
 
-	//printf("%s",path);
 	if(access(path,F_OK) == 0){
-		readCache();
+		readCache(path);
 	}else{
 		init();	
-		writeCache();
+		writeCache(path);
 	}
 
 	
 }
-void prepareSearch::writeCache(){
+void prepareSearch::writeCache(const char *cachePath){
 	utils::dump2file(DUMP_PATH,sizeof(int) * CORNORS_ORIENTATION_SIZE * MOVE_COUNT,(void *)cornors_orientation_move);
 	utils::dump2file(DUMP_PATH,sizeof(int) * EDGES_ORIENTATION_SIZE * MOVE_COUNT,(void *)edges_orientation_move);
 	utils::dump2file(DUMP_PATH,sizeof(int) * MIDDLE_EDGES_PERM_ORIENTATION_SIZE * MOVE_COUNT,(void *)middle_edges_perm_orientation_move);
@@ -82,7 +81,7 @@ void prepareSearch::writeCache(){
 	utils::dump2file(DUMP_PATH,sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE * CORNORS_PERM_SIZE,(void *)cp_mep);
 	utils::dump2file(DUMP_PATH,sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE * UD_EDGES_PERM_SIZE,(void *)ep_mep);
 }
-void prepareSearch::readCache(){
+void prepareSearch::readCache(const char *cachePath){
 
 	int postion = 0;
 	utils::readFromFile(DUMP_PATH,sizeof(int) * CORNORS_ORIENTATION_SIZE * MOVE_COUNT,(void *)cornors_orientation_move,postion);
