@@ -1,8 +1,10 @@
-#include "preparation.h"
-#include "algorithm.h"
 #include <string.h>
 #include <queue>
 #include <iostream> 
+#include <unistd.h>
+#include "utils.h"
+#include "preparation.h"
+#include "algorithm.h"
 
 std::vector<cube_t> middle_edges_perms;
 static int factorial_8[8] = {1,2,6,24,120,720,5040,40320};
@@ -52,6 +54,57 @@ int algorithm::combineIndex(int *nums,int m,int n){
 
 
 prepareSearch::prepareSearch(){
+	char buf[80];
+	getcwd(buf,sizeof(buf));
+	char path[128];
+	sprintf(path,"%s/cacheFile",buf);
+
+	//printf("%s",path);
+	if(access(path,F_OK) == 0){
+		readCache();
+	}else{
+		init();	
+		writeCache();
+	}
+
+	
+}
+void prepareSearch::writeCache(){
+	utils::dump2file(DUMP_PATH,sizeof(int) * CORNORS_ORIENTATION_SIZE * MOVE_COUNT,(void *)cornors_orientation_move);
+	utils::dump2file(DUMP_PATH,sizeof(int) * EDGES_ORIENTATION_SIZE * MOVE_COUNT,(void *)edges_orientation_move);
+	utils::dump2file(DUMP_PATH,sizeof(int) * MIDDLE_EDGES_PERM_ORIENTATION_SIZE * MOVE_COUNT,(void *)middle_edges_perm_orientation_move);
+	utils::dump2file(DUMP_PATH,sizeof(int8_t) * CORNORS_ORIENTATION_SIZE * MIDDLE_EDGES_COMBINATION,(void *)co_mec);
+	utils::dump2file(DUMP_PATH,sizeof(int8_t) * EDGES_ORIENTATION_SIZE * MIDDLE_EDGES_COMBINATION,(void *)eo_mec);
+
+	utils::dump2file(DUMP_PATH,sizeof(int) * CORNORS_PERM_SIZE * MOVE_COUNT,(void *)corners_perm_move);
+	utils::dump2file(DUMP_PATH,sizeof(int) * UD_EDGES_PERM_SIZE * MOVE_COUNT,(void *)ud_edges_perm_move);
+	utils::dump2file(DUMP_PATH,sizeof(int) * MIDDLE_EDGES_PERM_SIZE * MOVE_COUNT,(void *)middle_edges_perm_move);
+	utils::dump2file(DUMP_PATH,sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE * CORNORS_PERM_SIZE,(void *)cp_mep);
+	utils::dump2file(DUMP_PATH,sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE * UD_EDGES_PERM_SIZE,(void *)ep_mep);
+}
+void prepareSearch::readCache(){
+
+	int postion = 0;
+	utils::readFromFile(DUMP_PATH,sizeof(int) * CORNORS_ORIENTATION_SIZE * MOVE_COUNT,(void *)cornors_orientation_move,postion);
+	postion += sizeof(int) * CORNORS_ORIENTATION_SIZE * MOVE_COUNT;
+	utils::readFromFile(DUMP_PATH,sizeof(int) * EDGES_ORIENTATION_SIZE * MOVE_COUNT,(void *)edges_orientation_move,postion);
+	postion += sizeof(int) * EDGES_ORIENTATION_SIZE * MOVE_COUNT;
+	utils::readFromFile(DUMP_PATH,sizeof(int) * MIDDLE_EDGES_PERM_ORIENTATION_SIZE * MOVE_COUNT,(void *)middle_edges_perm_orientation_move,postion);
+	postion += sizeof(int) * MIDDLE_EDGES_PERM_ORIENTATION_SIZE * MOVE_COUNT;
+	utils::readFromFile(DUMP_PATH,sizeof(int8_t) * CORNORS_ORIENTATION_SIZE * MIDDLE_EDGES_COMBINATION,(void *)co_mec,postion);
+	postion += sizeof(int8_t) * CORNORS_ORIENTATION_SIZE * MIDDLE_EDGES_COMBINATION;
+	utils::readFromFile(DUMP_PATH,sizeof(int8_t) * EDGES_ORIENTATION_SIZE * MIDDLE_EDGES_COMBINATION,(void *)eo_mec,postion);
+	postion += sizeof(int8_t) * EDGES_ORIENTATION_SIZE * MIDDLE_EDGES_COMBINATION;
+
+	utils::readFromFile(DUMP_PATH,sizeof(int) * CORNORS_PERM_SIZE * MOVE_COUNT,(void *)corners_perm_move,postion);
+	postion += sizeof(int) * CORNORS_PERM_SIZE * MOVE_COUNT;
+	utils::readFromFile(DUMP_PATH,sizeof(int) * UD_EDGES_PERM_SIZE * MOVE_COUNT,(void *)ud_edges_perm_move,postion);
+	postion += sizeof(int) * UD_EDGES_PERM_SIZE * MOVE_COUNT;
+	utils::readFromFile(DUMP_PATH,sizeof(int) * MIDDLE_EDGES_PERM_SIZE * MOVE_COUNT,(void *)middle_edges_perm_move,postion);
+	postion += sizeof(int) * MIDDLE_EDGES_PERM_SIZE * MOVE_COUNT;
+	utils::readFromFile(DUMP_PATH,sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE * CORNORS_PERM_SIZE,(void *)cp_mep,postion);
+	postion += sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE * CORNORS_PERM_SIZE;
+	utils::readFromFile(DUMP_PATH,sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE * UD_EDGES_PERM_SIZE,(void *)ep_mep,postion);
 
 }
 
@@ -79,9 +132,9 @@ void prepareSearch::init(){
 	phase1_fill_heuristic(cube,edges_orientation,EDGES_ORIENTATION_SIZE,phase1_eo);
 
 
-
 	phase2_fill_pre();
 	phase1_fill_pre();
+
 	
 }
 int prepareSearch::calculateIndex(cube_t &cube,int type){

@@ -20,7 +20,6 @@ int main(int argc ,char **argv){
 	cube_t cube;
 	
 	prepareSearch *prs = new prepareSearch();
-	prs->init();
 
 	cubeState *mover = new cubeState();
 	for(int i = 1 ; i < argc; i++){
