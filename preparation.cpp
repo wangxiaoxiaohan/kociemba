@@ -69,41 +69,41 @@ prepareSearch::prepareSearch(){
 	
 }
 void prepareSearch::writeCache(const char *cachePath){
-	utils::dump2file(DUMP_PATH,sizeof(int) * CORNORS_ORIENTATION_SIZE * MOVE_COUNT,(void *)cornors_orientation_move);
-	utils::dump2file(DUMP_PATH,sizeof(int) * EDGES_ORIENTATION_SIZE * MOVE_COUNT,(void *)edges_orientation_move);
-	utils::dump2file(DUMP_PATH,sizeof(int) * MIDDLE_EDGES_PERM_ORIENTATION_SIZE * MOVE_COUNT,(void *)middle_edges_perm_orientation_move);
-	utils::dump2file(DUMP_PATH,sizeof(int8_t) * CORNORS_ORIENTATION_SIZE * MIDDLE_EDGES_COMBINATION,(void *)co_mec);
-	utils::dump2file(DUMP_PATH,sizeof(int8_t) * EDGES_ORIENTATION_SIZE * MIDDLE_EDGES_COMBINATION,(void *)eo_mec);
+	utils::dump2file(cachePath,sizeof(int) * CORNORS_ORIENTATION_SIZE * MOVE_COUNT,(void *)cornors_orientation_move);
+	utils::dump2file(cachePath,sizeof(int) * EDGES_ORIENTATION_SIZE * MOVE_COUNT,(void *)edges_orientation_move);
+	utils::dump2file(cachePath,sizeof(int) * MIDDLE_EDGES_PERM_ORIENTATION_SIZE * MOVE_COUNT,(void *)middle_edges_perm_orientation_move);
+	utils::dump2file(cachePath,sizeof(int8_t) * CORNORS_ORIENTATION_SIZE * MIDDLE_EDGES_COMBINATION,(void *)co_mec);
+	utils::dump2file(cachePath,sizeof(int8_t) * EDGES_ORIENTATION_SIZE * MIDDLE_EDGES_COMBINATION,(void *)eo_mec);
 
-	utils::dump2file(DUMP_PATH,sizeof(int) * CORNORS_PERM_SIZE * MOVE_COUNT,(void *)corners_perm_move);
-	utils::dump2file(DUMP_PATH,sizeof(int) * UD_EDGES_PERM_SIZE * MOVE_COUNT,(void *)ud_edges_perm_move);
-	utils::dump2file(DUMP_PATH,sizeof(int) * MIDDLE_EDGES_PERM_SIZE * MOVE_COUNT,(void *)middle_edges_perm_move);
-	utils::dump2file(DUMP_PATH,sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE * CORNORS_PERM_SIZE,(void *)cp_mep);
-	utils::dump2file(DUMP_PATH,sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE * UD_EDGES_PERM_SIZE,(void *)ep_mep);
+	utils::dump2file(cachePath,sizeof(int) * CORNORS_PERM_SIZE * MOVE_COUNT,(void *)corners_perm_move);
+	utils::dump2file(cachePath,sizeof(int) * UD_EDGES_PERM_SIZE * MOVE_COUNT,(void *)ud_edges_perm_move);
+	utils::dump2file(cachePath,sizeof(int) * MIDDLE_EDGES_PERM_SIZE * MOVE_COUNT,(void *)middle_edges_perm_move);
+	utils::dump2file(cachePath,sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE * CORNORS_PERM_SIZE,(void *)cp_mep);
+	utils::dump2file(cachePath,sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE * UD_EDGES_PERM_SIZE,(void *)ep_mep);
 }
 void prepareSearch::readCache(const char *cachePath){
 
 	int postion = 0;
-	utils::readFromFile(DUMP_PATH,sizeof(int) * CORNORS_ORIENTATION_SIZE * MOVE_COUNT,(void *)cornors_orientation_move,postion);
+	utils::readFromFile(cachePath,sizeof(int) * CORNORS_ORIENTATION_SIZE * MOVE_COUNT,(void *)cornors_orientation_move,postion);
 	postion += sizeof(int) * CORNORS_ORIENTATION_SIZE * MOVE_COUNT;
-	utils::readFromFile(DUMP_PATH,sizeof(int) * EDGES_ORIENTATION_SIZE * MOVE_COUNT,(void *)edges_orientation_move,postion);
+	utils::readFromFile(cachePath,sizeof(int) * EDGES_ORIENTATION_SIZE * MOVE_COUNT,(void *)edges_orientation_move,postion);
 	postion += sizeof(int) * EDGES_ORIENTATION_SIZE * MOVE_COUNT;
-	utils::readFromFile(DUMP_PATH,sizeof(int) * MIDDLE_EDGES_PERM_ORIENTATION_SIZE * MOVE_COUNT,(void *)middle_edges_perm_orientation_move,postion);
+	utils::readFromFile(cachePath,sizeof(int) * MIDDLE_EDGES_PERM_ORIENTATION_SIZE * MOVE_COUNT,(void *)middle_edges_perm_orientation_move,postion);
 	postion += sizeof(int) * MIDDLE_EDGES_PERM_ORIENTATION_SIZE * MOVE_COUNT;
-	utils::readFromFile(DUMP_PATH,sizeof(int8_t) * CORNORS_ORIENTATION_SIZE * MIDDLE_EDGES_COMBINATION,(void *)co_mec,postion);
+	utils::readFromFile(cachePath,sizeof(int8_t) * CORNORS_ORIENTATION_SIZE * MIDDLE_EDGES_COMBINATION,(void *)co_mec,postion);
 	postion += sizeof(int8_t) * CORNORS_ORIENTATION_SIZE * MIDDLE_EDGES_COMBINATION;
-	utils::readFromFile(DUMP_PATH,sizeof(int8_t) * EDGES_ORIENTATION_SIZE * MIDDLE_EDGES_COMBINATION,(void *)eo_mec,postion);
+	utils::readFromFile(cachePath,sizeof(int8_t) * EDGES_ORIENTATION_SIZE * MIDDLE_EDGES_COMBINATION,(void *)eo_mec,postion);
 	postion += sizeof(int8_t) * EDGES_ORIENTATION_SIZE * MIDDLE_EDGES_COMBINATION;
 
-	utils::readFromFile(DUMP_PATH,sizeof(int) * CORNORS_PERM_SIZE * MOVE_COUNT,(void *)corners_perm_move,postion);
+	utils::readFromFile(cachePath,sizeof(int) * CORNORS_PERM_SIZE * MOVE_COUNT,(void *)corners_perm_move,postion);
 	postion += sizeof(int) * CORNORS_PERM_SIZE * MOVE_COUNT;
-	utils::readFromFile(DUMP_PATH,sizeof(int) * UD_EDGES_PERM_SIZE * MOVE_COUNT,(void *)ud_edges_perm_move,postion);
+	utils::readFromFile(cachePath,sizeof(int) * UD_EDGES_PERM_SIZE * MOVE_COUNT,(void *)ud_edges_perm_move,postion);
 	postion += sizeof(int) * UD_EDGES_PERM_SIZE * MOVE_COUNT;
-	utils::readFromFile(DUMP_PATH,sizeof(int) * MIDDLE_EDGES_PERM_SIZE * MOVE_COUNT,(void *)middle_edges_perm_move,postion);
+	utils::readFromFile(cachePath,sizeof(int) * MIDDLE_EDGES_PERM_SIZE * MOVE_COUNT,(void *)middle_edges_perm_move,postion);
 	postion += sizeof(int) * MIDDLE_EDGES_PERM_SIZE * MOVE_COUNT;
-	utils::readFromFile(DUMP_PATH,sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE * CORNORS_PERM_SIZE,(void *)cp_mep,postion);
+	utils::readFromFile(cachePath,sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE * CORNORS_PERM_SIZE,(void *)cp_mep,postion);
 	postion += sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE * CORNORS_PERM_SIZE;
-	utils::readFromFile(DUMP_PATH,sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE * UD_EDGES_PERM_SIZE,(void *)ep_mep,postion);
+	utils::readFromFile(cachePath,sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE * UD_EDGES_PERM_SIZE,(void *)ep_mep,postion);
 
 }
 

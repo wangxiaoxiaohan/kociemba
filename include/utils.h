@@ -1,7 +1,6 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#define DUMP_PATH "/mnt/hgfs/ubuntu_share/cube/my_kociemba/new_kociemba/kociemba/cacheFile"
 class utils{
 public:
 	utils();
