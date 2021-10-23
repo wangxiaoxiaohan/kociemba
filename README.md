@@ -7,7 +7,7 @@ How to use :
 To use my sample , follow you shuffle steps 
 ./main U2 L2 R2 …
 
-
+default max  solution step length is 20 
 
 1.encode rules
 
