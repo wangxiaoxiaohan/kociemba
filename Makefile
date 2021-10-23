@@ -11,7 +11,7 @@ AR = ar
 CC_FLAGS += -g -Wall -std=c++11
   
 SRCS = ./preparation.cpp \
-	./cubeStates.cpp \
+	./cubestate.cpp \
 	./utils.cpp	\
 	./main.cpp 
 

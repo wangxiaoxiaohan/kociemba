@@ -1,4 +1,4 @@
-#include <stdlib.h> 
+ #include <stdlib.h> 
 #include <stdio.h>
 #include "preparation.h"
 #include <cstring>
@@ -29,11 +29,11 @@ int main(int argc ,char **argv){
 	
 	struct timeval timeEnd, timeStart; 
 	gettimeofday(&timeStart, NULL );	
-	prs->phase(cube);
+	prs->solve(cube);
 	
 	gettimeofday( &timeEnd, NULL ); 
 	long long total_time = (timeEnd.tv_sec - timeStart.tv_sec) * 1000000 + (timeEnd.tv_usec - timeStart.tv_usec); 
-	std::cout<< "total time is us " << total_time << std::endl;
+	std::cout<< "search time is " << total_time << "us" << std::endl;
 	
 }
 

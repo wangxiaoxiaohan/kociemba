@@ -111,24 +111,24 @@ void prepareSearch::init(){
 	cube_t cube;
 
 	memset(ud_edges_perm_move,0xff,sizeof(int) * UD_EDGES_PERM_SIZE * MOVE_COUNT);
-	phase2_fill_heuristic(cube,ud_edges_perm,UD_EDGES_PERM_SIZE,phase2_edges1);
+	phase2_fill_buffer(cube,ud_edges_perm,UD_EDGES_PERM_SIZE,ud_edges_perm_index);
 
 	memset(middle_edges_perm_move,0xff,sizeof(int) * MIDDLE_EDGES_PERM_SIZE * MOVE_COUNT);
-	phase2_fill_heuristic(cube,ud_edges_perm,MIDDLE_EDGES_PERM_SIZE,phase2_edges2);
+	phase2_fill_buffer(cube,ud_edges_perm,MIDDLE_EDGES_PERM_SIZE,middle_edges_perm_index);
 
 	memset(corners_perm_move,0xff,sizeof(int) * CORNORS_PERM_SIZE * MOVE_COUNT);
-	phase2_fill_heuristic(cube,corners_perm,CORNORS_PERM_SIZE,phase2_corners);
+	phase2_fill_buffer(cube,corners_perm,CORNORS_PERM_SIZE,cornors_perm_index);
 
 
 
 	memset(middle_edges_perm_orientation_move,0xff,sizeof(int) * MIDDLE_EDGES_PERM_ORIENTATION_SIZE * MOVE_COUNT);
-	phase1_edges_fill_heuristic(cube);
+	phase1_fill_me_buffer(cube);
 
 	memset(cornors_orientation_move,0xff,sizeof(int) * CORNORS_ORIENTATION_SIZE * MOVE_COUNT);
-	phase1_fill_heuristic(cube,cornors_orientation,CORNORS_ORIENTATION_SIZE,phase1_co);
+	phase1_fill_buffer(cube,cornors_orientation,CORNORS_ORIENTATION_SIZE,co_index);
 
 	memset(edges_orientation_move,0xff,sizeof(int) * EDGES_ORIENTATION_SIZE * MOVE_COUNT);
-	phase1_fill_heuristic(cube,edges_orientation,EDGES_ORIENTATION_SIZE,phase1_eo);
+	phase1_fill_buffer(cube,edges_orientation,EDGES_ORIENTATION_SIZE,eo_index);
 
 
 	phase2_fill_pre();
@@ -139,19 +139,19 @@ void prepareSearch::init(){
 int prepareSearch::calculateIndex(cube_t &cube,int type){
 	int ret = 0;
 	switch(type){
-		case phase1_co :{
+		case co_index :{
 			for(int i = 0 ; i < 7;i++){
 				ret = ret * 3 + cube.co[i];
 			}
 		}
 		break;
-		case phase1_eo:{
+		case eo_index:{
 			for(int i = 0 ; i < 11;i++){
 				ret = ret * 2 + cube.eo[i];
 			}
 		}
 		break;
-		case phase1_edges:{		
+		case me_combine_index:{		
 			int comArr[12] = {0};
 			int permArr[4] = {0};
 			int x = 0;
@@ -167,21 +167,21 @@ int prepareSearch::calculateIndex(cube_t &cube,int type){
 
 		}
 		break;
-		case phase2_edges1:{		
+		case ud_edges_perm_index:{		
 			int permArr[8] = {0};
 			for(int i = 0;i < 8;i++)
 				permArr[i] = cube.ep[i];
 			ret = algorithm::cantor(permArr,8,factorial_8);
 		}
 		break;
-		case phase2_edges2:{
+		case middle_edges_perm_index:{
 			int permArr[4] = {0};
 			for(int i = 0 ;i < 4; i++)
 				permArr[i] = cube.ep[i + 8] - 8;
 			ret = algorithm::cantor(permArr,4,factorial_4);
 		}
 		break;
-		case phase2_corners:{
+		case cornors_perm_index:{
 			int permArr[8] = {0};
 			for(int i = 0 ; i < 8 ; i++)
 				permArr[i] = cube.cp[i];
@@ -192,13 +192,13 @@ int prepareSearch::calculateIndex(cube_t &cube,int type){
 	return ret;
 
 }
-void prepareSearch::phase2_fill_heuristic(cube_t cube,int8_t *dest,int destSize,enum pahse_type type){
+void prepareSearch::phase2_fill_buffer(cube_t cube,int8_t *dest,int destSize,enum phase_type type){
 	std::queue<std::pair<cube_t,int>> q;
 	memset(dest,0xff,destSize);
 	q.push(std::make_pair(cube,0));
 
 	dest[0] = 0;
-	if(type == phase2_edges2){
+	if(type == middle_edges_perm_index){
 		middle_edges_perms.push_back(cube);
 	}
 	int count = 0;
@@ -212,18 +212,18 @@ void prepareSearch::phase2_fill_heuristic(cube_t cube,int8_t *dest,int destSize,
 				int Index = calculateIndex(current,type);
 
 				
-				if(type == phase2_corners){
+				if(type == cornors_perm_index){
 					corners_perm_move[fatherIndex][move] = Index;
-				}else if(type == phase2_edges1){
+				}else if(type == ud_edges_perm_index){
 					ud_edges_perm_move[fatherIndex][move] = Index;
-				}else if(type == phase2_edges2){
+				}else if(type == middle_edges_perm_index){
 					middle_edges_perm_move[fatherIndex][move] = Index;
 				}
 				if(dest[Index] == -1){
 					int step = front.second;	
 					dest[Index] = step + 1;
 					q.push(std::make_pair(current,step+1));
-					if(type == phase2_edges2){
+					if(type == middle_edges_perm_index){
 						middle_edges_perms.push_back(current);
 					}
 				}
@@ -292,7 +292,7 @@ void prepareSearch::phase2_fill_pre(){
 	}
 
 }
-void prepareSearch::phase1_fill_heuristic(cube_t goalstate,int8_t *dest,int destSize,enum pahse_type type){
+void prepareSearch::phase1_fill_buffer(cube_t goalstate,int8_t *dest,int destSize,enum phase_type type){
 	std::queue<std::pair<cube_t,int>> q;
 	memset(dest,0xff,destSize);
 	std::pair<cube_t ,int> firstPair(goalstate,0);
@@ -306,7 +306,7 @@ void prepareSearch::phase1_fill_heuristic(cube_t goalstate,int8_t *dest,int dest
 			int step = front.second;
 			cube_t currstate = cubeState::moveRotate(move, front.first);
 			int Index =calculateIndex(currstate,type);
-		    if(type == phase1_co){
+		    if(type == co_index){
 				cornors_orientation_move[fatherIndex][move] = Index;
 			}else{
 				edges_orientation_move[fatherIndex][move] = Index;
@@ -321,7 +321,7 @@ void prepareSearch::phase1_fill_heuristic(cube_t goalstate,int8_t *dest,int dest
 
 	}
 }
-void prepareSearch::phase1_edges_fill_heuristic(cube_t state){
+void prepareSearch::phase1_fill_me_buffer(cube_t state){
 	std::queue<std::pair<cube_t,int>> q;
 	memset(middle_edges_perm_orientation,0xff,MIDDLE_EDGES_PERM_ORIENTATION_SIZE);
 	std::pair<cube_t ,int> firstPair(state,0);
@@ -329,16 +329,16 @@ void prepareSearch::phase1_edges_fill_heuristic(cube_t state){
 	int count = 0 ;
 	for(int i = 0 ; i <middle_edges_perms.size();i++){
 		q.push(std::make_pair(middle_edges_perms[i],0));
-		int Index = calculateIndex(middle_edges_perms[i], phase1_edges);
+		int Index = calculateIndex(middle_edges_perms[i], me_combine_index);
 		middle_edges_perm_orientation[Index] = 0;
 	}
 	while(!q.empty()){ 
 		std::pair<cube_t ,int> front = q.front();
-		int FatherIndex = calculateIndex(front.first, phase1_edges);
+		int FatherIndex = calculateIndex(front.first, me_combine_index);
 		for( int move=0; move<18; move++ ){
 			int step = front.second;
 			cube_t currstate = cubeState::moveRotate(move, front.first);
-			int Index = calculateIndex(currstate, phase1_edges);
+			int Index = calculateIndex(currstate, me_combine_index);
 			middle_edges_perm_orientation_move[FatherIndex][move] = Index;
 			 if(middle_edges_perm_orientation[Index] == -1)
 			 {
@@ -406,11 +406,11 @@ bool prepareSearch::DFSphase2(search_t& se_t){
 		for( int move=0; move<18; move++ ){
 			if( MOVELIMIT & (1 << move) ){
 				if(move / 3 == se_t.face || move / 3  == se_t.face - 1) continue;
-				int phase2_edges1_index = ud_edges_perm_move[se_t.phase2_edges1_index][move];
-				int phase2_edges2_index = middle_edges_perm_move[se_t.phase2_edges2_index][move];
-				int phase2_corners_index = corners_perm_move[se_t.phase2_corners_index][move];
-				//int val = max(ud_edges_perm[phase2_edges1_index],max(middle_edges_perm_orientation_move[phase2_edges2_index],corners_perm[phase2_corners_index]));
-				int val =std::max(ep_mep[phase2_edges1_index * 24 + phase2_edges2_index],cp_mep[phase2_corners_index * 24 +phase2_edges2_index] 	);
+				int ud_edges_perm_index = ud_edges_perm_move[se_t.ud_edges_perm_index][move];
+				int middle_edges_perm_index = middle_edges_perm_move[se_t.middle_edges_perm_index][move];
+				int cornors_perm_index = corners_perm_move[se_t.cornors_perm_index][move];
+				//int val = max(ud_edges_perm[ud_edges_perm_index],max(middle_edges_perm_orientation_move[middle_edges_perm_index],corners_perm[cornors_perm_index]));
+				int val =std::max(ep_mep[ud_edges_perm_index * 24 + middle_edges_perm_index],cp_mep[cornors_perm_index * 24 +middle_edges_perm_index] 	);
 				if(val + se_t.current_depth + 1 <= se_t.total_depth){
 					(*se_t.steps)[se_t.current_depth] = move;
 					if(val == 0){
@@ -418,9 +418,9 @@ bool prepareSearch::DFSphase2(search_t& se_t){
 					}	
 					search_t newSe_t = se_t;
 					newSe_t.current_depth += 1;
-					newSe_t.phase2_edges1_index = phase2_edges1_index;
-					newSe_t.phase2_edges2_index = phase2_edges2_index;
-					newSe_t.phase2_corners_index = phase2_corners_index;
+					newSe_t.ud_edges_perm_index = ud_edges_perm_index;
+					newSe_t.middle_edges_perm_index = middle_edges_perm_index;
+					newSe_t.cornors_perm_index = cornors_perm_index;
 					newSe_t.face = move / 3;
 					if(DFSphase2(newSe_t))
 						return true;			
@@ -442,9 +442,9 @@ bool prepareSearch::phase2(cube_t    cube,steps_t steps){
 		steps_t steps2(depth);
 		search_t search;
 		search.face = 6;
-		search.phase2_edges1_index = calculateIndex(cube, phase2_edges1);
-		search.phase2_edges2_index = calculateIndex(cube, phase2_edges2);
-		search.phase2_corners_index = calculateIndex(cube, phase2_corners);
+		search.ud_edges_perm_index = calculateIndex(cube, ud_edges_perm_index);
+		search.middle_edges_perm_index = calculateIndex(cube, middle_edges_perm_index);
+		search.cornors_perm_index = calculateIndex(cube, cornors_perm_index);
 		search.current_depth = 0;
 		search.total_depth = depth;
 		search.steps = &steps2;
@@ -465,13 +465,13 @@ bool prepareSearch::DFSphase1(search_t& se_t){
 		for( int move=0; move<18; move++ ){
 			if(move / 3 == se_t.face ) continue;
 
-			int phase1_co_index = cornors_orientation_move[se_t.phase1_co_index][move];
-			int phase1_eo_index = edges_orientation_move[se_t.phase1_eo_index][move];
-			int phase1_edges_index = middle_edges_perm_orientation_move[se_t.phase1_edges_index][move];
+			int co_index = cornors_orientation_move[se_t.co_index][move];
+			int eo_index= edges_orientation_move[se_t.eo_index][move];
+			int me_combine_index = middle_edges_perm_orientation_move[se_t.me_combine_index][move];
 			
-			//int val = std::max(std::max(cornors_orientation[phase1_co_index],edges_orientation[phase1_eo_index]),middle_edges_perm_orientation[phase1_edges_index]); 
-			int val = std::max(co_mec[MIDDLE_EDGES_COMBINATION * phase1_co_index + phase1_edges_index/24],
-								 eo_mec[MIDDLE_EDGES_COMBINATION * phase1_eo_index   + phase1_edges_index/24]);
+			//int val = std::max(std::max(cornors_orientation[co_index],edges_orientation[phase1_eo_index]),middle_edges_perm_orientation[me_combine_index]); 
+			int val = std::max(co_mec[MIDDLE_EDGES_COMBINATION * co_index + me_combine_index/24],
+								 eo_mec[MIDDLE_EDGES_COMBINATION * eo_index  + me_combine_index/24]);
 			if(val + se_t.current_depth + 1 <= se_t.total_depth){
 				(*se_t.steps)[se_t.current_depth] = move;
 				if(val == 0){
@@ -481,9 +481,9 @@ bool prepareSearch::DFSphase1(search_t& se_t){
 				search_t newSe_t = se_t;
 				newSe_t.current_depth += 1;
 				newSe_t.face = move / 3;
-				newSe_t.phase1_co_index = phase1_co_index;
-				newSe_t.phase1_eo_index = phase1_eo_index;
-				newSe_t.phase1_edges_index = phase1_edges_index;
+				newSe_t.co_index = co_index;
+				newSe_t.eo_index= eo_index;
+				newSe_t.me_combine_index = me_combine_index;
 				if(DFSphase1(newSe_t)){
 						return true;
 				}
@@ -495,7 +495,7 @@ bool prepareSearch::DFSphase1(search_t& se_t){
 	
 }
 
-bool prepareSearch::phase(cube_t cube){
+bool prepareSearch::solve(cube_t cube){
 
 	for(int depth = 0 ; ; ++depth){
 		steps_t steps(depth);
@@ -506,9 +506,9 @@ bool prepareSearch::phase(cube_t cube){
 		search.current_depth = 0;
 		search.total_depth = depth;
 		search.steps = &steps;
-		search.phase1_co_index = calculateIndex(cube,phase1_co);
-		search.phase1_eo_index = calculateIndex(cube,phase1_eo);
-		search.phase1_edges_index = calculateIndex(cube,phase1_edges);
+		search.co_index = calculateIndex(cube,co_index);
+		search.eo_index= calculateIndex(cube,eo_index);
+		search.me_combine_index = calculateIndex(cube,me_combine_index);
 
  		if(DFSphase1(search))
 			break;

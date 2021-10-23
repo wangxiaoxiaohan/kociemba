@@ -26,15 +26,15 @@ public:
 	~prepareSearch();
 	static int calculateIndex(cube_t &cube,int type);
 	void init();
-	void phase2_fill_heuristic(cube_t cube,int8_t *dest,int destSize,enum pahse_type type);
+	void phase2_fill_buffer(cube_t cube,int8_t *dest,int destSize,enum phase_type type);
 	void phase2_fill_pre();
-	void phase1_fill_heuristic(cube_t goalstate,int8_t *dest,int destSize,enum pahse_type type);
-	void phase1_edges_fill_heuristic(cube_t state);
+	void phase1_fill_buffer(cube_t goalstate,int8_t *dest,int destSize,enum phase_type type);
+	void phase1_fill_me_buffer(cube_t state);
 	void phase1_fill_pre();
 	bool DFSphase2(search_t& se_t);
 	bool phase2(cube_t    cube,steps_t steps);
 	bool DFSphase1(search_t& se_t);
-	bool phase(cube_t cube);
+	bool solve(cube_t cube);
 	void printSolution(steps_t steps);
 	
 private:

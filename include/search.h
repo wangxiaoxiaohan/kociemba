@@ -18,21 +18,20 @@ struct search_t
 	cube_t initstate;
 	int  face, total_depth,current_depth;
 	steps_t* steps;
-	int phase1_co_index;
-	int phase1_eo_index;
-	int phase1_edges_index;
-	int phase2_edges1_index;
-	int phase2_edges2_index;
-	int phase2_corners_index;
+	int co_index;
+	int eo_index;
+	int me_combine_index;
+	int ud_edges_perm_index;
+	int middle_edges_perm_index;
+	int cornors_perm_index;
 };
-enum pahse_type{
-	phase1_eo = 0,
-	phase1_co,
-	phase1_edges,
-	phase2_edges1,
-	phase2_edges2,
-	phase2_corners,
-	phase2_edges
+enum phase_type{
+	eo_index = 0,
+	co_index,
+	me_combine_index,
+	ud_edges_perm_index,
+	middle_edges_perm_index,
+	cornors_perm_index
 };
 
 #endif
