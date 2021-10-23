@@ -1,6 +1,7 @@
 #ifndef __SEARCH_SOLUTION___
 #define __SEARCH_SOLUTION___
 #include "cubestate.h"
+#define MAX_STEP 20
 typedef struct{
 	int corners;
 	int edges1;

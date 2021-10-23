@@ -2,12 +2,25 @@
 rubik's cube kocimeba solution implement
 
 
+
+How to use :
+To use my sample , follow you shuffle steps 
+./main U2 L2 R2 …
+
+
+
 1.encode rules
+
+
+
 a.position
 Choose an orientation as your personal
 in WCA cube competition ,use green as front ,white as top
 then encode blocks : see <block.h>
-b.
+
+
+
+b.orientation
 how to understand block orientation?
 For edges: false state is 1,true state is 0;
 For cornors :
@@ -15,11 +28,10 @@ if state is 1 ,it means this block Counterclockwise one time
 if state is 2 ,it means this block Counterclockwise two times
 if state is 0,the orientation is true
 
-How to use :
-To use my sample , follow you shuffle steps 
-./main U2 L2 R2 …
 
-With this way ,you have to make  clear shuffle  steps
+
+With my sample ,you have to make  clear shuffle  steps
+
 If you want solve a cube you just shuffle  at will 
 You have to record your cube status
 
@@ -30,6 +42,8 @@ Follow this rules and you can make a legal “cube_t” to search solution
 
 
 2.how to record a shuffled  cube?
+
+
 
 a.position
 when you clear you personal cube orientation,
@@ -62,3 +76,4 @@ if state is 0,the orientation is true
 
 
  it’s easy to sure orientation state.
+

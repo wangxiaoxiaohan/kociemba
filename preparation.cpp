@@ -438,7 +438,7 @@ bool prepareSearch::phase2(cube_t    cube,steps_t steps){
 	for( int i = 0; i<steps.size(); i++ ){
 		cube = cubeState::moveRotate(steps[i], cube);
 	}
-	int step2_len = (20 - steps.size()) > 10 ? 10 : ( 20 - steps.size());
+	int step2_len = (MAX_STEP - steps.size()) > 10 ? 10 : (MAX_STEP - steps.size());
 	for(int depth = 0 ;depth <= step2_len; ++depth){
 		steps_t steps2(depth);
 		search_info_t search;
