@@ -18,10 +18,9 @@ std::map<std::string,int> str2move{
 
 int main(int argc ,char **argv){
 	cube_t cube;
-	
-	prepareSearch *prs = new prepareSearch();
 
-	cubeState *mover = new cubeState();
+	std::shared_ptr<prepareSearch> prs(new prepareSearch());
+	std::shared_ptr<cubeState> mover(new cubeState());
 	for(int i = 1 ; i < argc; i++){
 		std::string move(argv[i]);
 		cube = mover->moveRotate(str2move[move],cube);		
@@ -34,6 +33,8 @@ int main(int argc ,char **argv){
 	gettimeofday( &timeEnd, NULL ); 
 	long long total_time = (timeEnd.tv_sec - timeStart.tv_sec) * 1000000 + (timeEnd.tv_usec - timeStart.tv_usec); 
 	std::cout<< "search time is " << total_time << "us" << std::endl;
+
+	
 	
 }
 

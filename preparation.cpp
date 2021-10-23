@@ -6,7 +6,6 @@
 #include "preparation.h"
 #include "algorithm.h"
 
-std::vector<cube_t> middle_edges_perms;
 static int factorial_8[8] = {1,2,6,24,120,720,5040,40320};
 static int factorial_4[4] ={1,2,6,24};
 static int factorial_12_4[4] = {1,9,90,990};
@@ -65,9 +64,11 @@ prepareSearch::prepareSearch(){
 		init();	
 		writeCache(path);
 	}
-
-	
 }
+prepareSearch::~prepareSearch(){
+
+}
+
 void prepareSearch::writeCache(const char *cachePath){
 	utils::dump2file(cachePath,sizeof(int) * CORNORS_ORIENTATION_SIZE * MOVE_COUNT,(void *)cornors_orientation_move);
 	utils::dump2file(cachePath,sizeof(int) * EDGES_ORIENTATION_SIZE * MOVE_COUNT,(void *)edges_orientation_move);
@@ -402,21 +403,21 @@ void prepareSearch::phase1_fill_pre(){
 
 
 }
-bool prepareSearch::DFSphase2(search_t& se_t){
+bool prepareSearch::DFSphase2(search_info_t& se_t){
 		for( int move=0; move<18; move++ ){
 			if( MOVELIMIT & (1 << move) ){
-				if(move / 3 == se_t.face || move / 3  == se_t.face - 1) continue;
+				if(move / 3 == se_t.face) continue;
 				int ud_edges_perm_index = ud_edges_perm_move[se_t.ud_edges_perm_index][move];
 				int middle_edges_perm_index = middle_edges_perm_move[se_t.middle_edges_perm_index][move];
 				int cornors_perm_index = corners_perm_move[se_t.cornors_perm_index][move];
 				//int val = max(ud_edges_perm[ud_edges_perm_index],max(middle_edges_perm_orientation_move[middle_edges_perm_index],corners_perm[cornors_perm_index]));
 				int val =std::max(ep_mep[ud_edges_perm_index * 24 + middle_edges_perm_index],cp_mep[cornors_perm_index * 24 +middle_edges_perm_index] 	);
-				if(val + se_t.current_depth + 1 <= se_t.total_depth){
+				if(val + se_t.current_depth  < se_t.total_depth){
 					(*se_t.steps)[se_t.current_depth] = move;
 					if(val == 0){
 							return true;
 					}	
-					search_t newSe_t = se_t;
+					search_info_t newSe_t = se_t;
 					newSe_t.current_depth += 1;
 					newSe_t.ud_edges_perm_index = ud_edges_perm_index;
 					newSe_t.middle_edges_perm_index = middle_edges_perm_index;
@@ -440,7 +441,7 @@ bool prepareSearch::phase2(cube_t    cube,steps_t steps){
 	int step2_len = (20 - steps.size()) > 10 ? 10 : ( 20 - steps.size());
 	for(int depth = 0 ;depth <= step2_len; ++depth){
 		steps_t steps2(depth);
-		search_t search;
+		search_info_t search;
 		search.face = 6;
 		search.ud_edges_perm_index = calculateIndex(cube, ud_edges_perm_index);
 		search.middle_edges_perm_index = calculateIndex(cube, middle_edges_perm_index);
@@ -460,9 +461,9 @@ bool prepareSearch::phase2(cube_t    cube,steps_t steps){
 	return false;
 }
 
-bool prepareSearch::DFSphase1(search_t& se_t){
+bool prepareSearch::DFSphase1(search_info_t& se_t){
 
-		for( int move=0; move<18; move++ ){
+		for( int move = 0; move < 18; move++ ){
 			if(move / 3 == se_t.face ) continue;
 
 			int co_index = cornors_orientation_move[se_t.co_index][move];
@@ -472,13 +473,13 @@ bool prepareSearch::DFSphase1(search_t& se_t){
 			//int val = std::max(std::max(cornors_orientation[co_index],edges_orientation[phase1_eo_index]),middle_edges_perm_orientation[me_combine_index]); 
 			int val = std::max(co_mec[MIDDLE_EDGES_COMBINATION * co_index + me_combine_index/24],
 								 eo_mec[MIDDLE_EDGES_COMBINATION * eo_index  + me_combine_index/24]);
-			if(val + se_t.current_depth + 1 <= se_t.total_depth){
+			if(val + se_t.current_depth  < se_t.total_depth){
 				(*se_t.steps)[se_t.current_depth] = move;
 				if(val == 0){
 					if(phase2(se_t.initstate,*se_t.steps))	
 						return true;
 				}
-				search_t newSe_t = se_t;
+				search_info_t newSe_t = se_t;
 				newSe_t.current_depth += 1;
 				newSe_t.face = move / 3;
 				newSe_t.co_index = co_index;
@@ -496,10 +497,11 @@ bool prepareSearch::DFSphase1(search_t& se_t){
 }
 
 bool prepareSearch::solve(cube_t cube){
-
-	for(int depth = 0 ; ; ++depth){
+	int depth = 0;
+	
+	while(true){
 		steps_t steps(depth);
-		search_t search;
+		search_info_t search;
 
 		search.face = 6;
 		search.initstate =cube;
@@ -512,7 +514,9 @@ bool prepareSearch::solve(cube_t cube){
 
  		if(DFSphase1(search))
 			break;
+		depth ++; 
 	}
+
 }
 void prepareSearch::printSolution(steps_t steps){
 	for( int i = 0; i < steps.size(); i++ ){

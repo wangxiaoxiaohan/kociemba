@@ -24,6 +24,10 @@ class prepareSearch{
 public:
 	prepareSearch();
 	~prepareSearch();
+	bool solve(cube_t cube);
+
+	
+private:
 	static int calculateIndex(cube_t &cube,int type);
 	void init();
 	void phase2_fill_buffer(cube_t cube,int8_t *dest,int destSize,enum phase_type type);
@@ -31,15 +35,14 @@ public:
 	void phase1_fill_buffer(cube_t goalstate,int8_t *dest,int destSize,enum phase_type type);
 	void phase1_fill_me_buffer(cube_t state);
 	void phase1_fill_pre();
-	bool DFSphase2(search_t& se_t);
+	bool DFSphase2(search_info_t& se_t);
 	bool phase2(cube_t    cube,steps_t steps);
-	bool DFSphase1(search_t& se_t);
-	bool solve(cube_t cube);
-	void printSolution(steps_t steps);
+	bool DFSphase1(search_info_t& se_t);
 	
-private:
+	void printSolution(steps_t steps);	
 	void writeCache(const char *cachePath);
 	void readCache(const char *cachePath);
+
 
 	//phase1 完成的状态(1.棱块方向全部归位 2。角块方向全部归位 3 中层四个棱块都在中层，以下三个数组分别对应)
 	int8_t cornors_orientation[CORNORS_ORIENTATION_SIZE];//角块方向 只考虑7个即可，若7个方向已经定下来 剩下一个也就是已知的
@@ -76,6 +79,7 @@ private:
 	int8_t ep_mep[MIDDLE_EDGES_PERM_SIZE *  UD_EDGES_PERM_SIZE];
 
 	
+	std::vector<cube_t> middle_edges_perms;
 
 };
 

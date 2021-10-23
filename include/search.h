@@ -12,8 +12,10 @@ typedef struct{
 	int middle_edges_combination;
 }phase1_pru_t;
 typedef std::vector<int> steps_t; 
-
-struct search_t
+//typedef struct{
+//	int steps[32];
+//} steps_t;
+struct search_info_t
 {
 	cube_t initstate;
 	int  face, total_depth,current_depth;
