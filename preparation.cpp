@@ -410,6 +410,7 @@ bool prepareSearch::DFSphase2(search_info_t& se_t){
 				int ud_edges_perm_index = ud_edges_perm_move[se_t.ud_edges_perm_index][move];
 				int middle_edges_perm_index = middle_edges_perm_move[se_t.middle_edges_perm_index][move];
 				int cornors_perm_index = corners_perm_move[se_t.cornors_perm_index][move];
+				//printf("e:%d c:%d\n",ep_mep[ud_edges_perm_index * 24 + middle_edges_perm_index],cp_mep[cornors_perm_index * 24 +middle_edges_perm_index]);
 				//int val = max(ud_edges_perm[ud_edges_perm_index],max(middle_edges_perm_orientation_move[middle_edges_perm_index],corners_perm[cornors_perm_index]));
 				int val =std::max(ep_mep[ud_edges_perm_index * 24 + middle_edges_perm_index],cp_mep[cornors_perm_index * 24 +middle_edges_perm_index] 	);
 				if(val + se_t.current_depth  < se_t.total_depth){

@@ -1,4 +1,4 @@
- #include <stdlib.h> 
+#include <stdlib.h> 
 #include <stdio.h>
 #include "preparation.h"
 #include <cstring>
@@ -6,6 +6,7 @@
 #include <memory>
 #include <sys/time.h>   
 #include <iostream> 
+#include "utils.h"
 
 std::map<std::string,int> str2move{
 	{"U",0},{"U2",1},{"U'",2},
@@ -25,6 +26,10 @@ int main(int argc ,char **argv){
 		std::string move(argv[i]);
 		cube = mover->moveRotate(str2move[move],cube);		
 	}
+	
+	//std::shared_ptr<utils> util(new utils());
+	//util->cubeVerify(cube);
+
 	
 	struct timeval timeEnd, timeStart; 
 	gettimeofday(&timeStart, NULL );	
