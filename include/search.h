@@ -12,15 +12,22 @@ typedef struct{
 	int eo;
 	int middle_edges_combination;
 }phase1_pru_t;
-typedef std::vector<int> steps_t; 
-//typedef struct{
-//	int steps[32];
-//} steps_t;
+struct moves_t{
+	int steps[16];
+	int vaildLength;
+	moves_t(int size){
+		for(int i = 0; i < 16 ;i++){
+			steps[i] = 0;
+		}
+		vaildLength = size;
+			
+	}
+};
 struct search_info_t
 {
 	cube_t initstate;
 	int  face, total_depth,current_depth;
-	steps_t* steps;
+	moves_t* steps;
 	int co_index;
 	int eo_index;
 	int me_combine_index;

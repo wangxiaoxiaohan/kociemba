@@ -36,10 +36,10 @@ private:
 	void phase1_fill_me_buffer(cube_t state);
 	void phase1_fill_pre();
 	bool DFSphase2(search_info_t& se_t);
-	bool phase2(cube_t    cube,steps_t steps);
+	bool phase2(cube_t    cube,moves_t steps);
 	bool DFSphase1(search_info_t& se_t);
 	
-	void printSolution(steps_t steps);	
+	void printSolution(moves_t steps);	
 	void writeCache(const char *cachePath);
 	void readCache(const char *cachePath);
 

@@ -8,7 +8,6 @@
 
 static int factorial_8[8] = {1,2,6,24,120,720,5040,40320};
 static int factorial_4[4] ={1,2,6,24};
-static int factorial_12_4[4] = {1,9,90,990};
 
 
 int algorithm::cantor(int* nums,int size,int* factorial_n){
@@ -34,10 +33,6 @@ int algorithm::combine(int m,int n){
 	}
 	return Arrangement/distribution;
 }
-//此算法为m选n组合的所有case 进行编号，返回值即为结果序号 
-//由于中层棱块编号为后四棱，即下标最大的四个块，因此，此算法
-//有一个原则是: 组合填大下标时，序号就小.
-//应用于棱块组合，即：当四个棱块完全归位时，结果序号为0
 int algorithm::combineIndex(int *nums,int m,int n){
 
 	int tarIndex = 1;
@@ -202,7 +197,6 @@ void prepareSearch::phase2_fill_buffer(cube_t cube,int8_t *dest,int destSize,enu
 	if(type == middle_edges_perm_index){
 		middle_edges_perms.push_back(cube);
 	}
-	int count = 0;
 	while(!q.empty()){ 
 		std::pair<cube_t ,int> front = q.front();
 		int fatherIndex =calculateIndex(front.first,type);
@@ -228,7 +222,6 @@ void prepareSearch::phase2_fill_buffer(cube_t cube,int8_t *dest,int destSize,enu
 						middle_edges_perms.push_back(current);
 					}
 				}
-				count ++;
 			}
 		}
 		q.pop();
@@ -252,7 +245,6 @@ void prepareSearch::phase2_fill_pre(){
 	while(!q.empty()){ 
 		std::pair<phase2_pru_t,int> front = q.front();
 		int depth = front.second;
-		searchcount ++;
 		for( int move=0; move<18; move++ ){
 			if( MOVELIMIT & (1 << move) ){			
 				phase2_pru_t new_t;	
@@ -277,7 +269,6 @@ void prepareSearch::phase2_fill_pre(){
 	while(!q2.empty()){ 
 		std::pair<phase2_pru_t,int> front = q2.front();
 		int depth = front.second;
-		searchcount++;
 		for( int move=0; move<18; move++ ){
 			if( MOVELIMIT & (1 << move) ){			
 				phase2_pru_t new_t;	
@@ -299,7 +290,6 @@ void prepareSearch::phase1_fill_buffer(cube_t goalstate,int8_t *dest,int destSiz
 	std::pair<cube_t ,int> firstPair(goalstate,0);
 	q.push(firstPair);
 	dest[0] = 0;
-	int count = 0;
 	while(!q.empty()){ 
 		std::pair<cube_t ,int> front = q.front();
 		int fatherIndex =calculateIndex(front.first,type);
@@ -316,7 +306,6 @@ void prepareSearch::phase1_fill_buffer(cube_t goalstate,int8_t *dest,int destSiz
 				dest[Index] = step + 1;
 				q.push(std::make_pair(currstate,step+1));
 			}	
-			count ++;
 		}
 		q.pop();
 
@@ -327,7 +316,6 @@ void prepareSearch::phase1_fill_me_buffer(cube_t state){
 	memset(middle_edges_perm_orientation,0xff,MIDDLE_EDGES_PERM_ORIENTATION_SIZE);
 	std::pair<cube_t ,int> firstPair(state,0);
 	q.push(firstPair);
-	int count = 0 ;
 	for(int i = 0 ; i <middle_edges_perms.size();i++){
 		q.push(std::make_pair(middle_edges_perms[i],0));
 		int Index = calculateIndex(middle_edges_perms[i], me_combine_index);
@@ -346,7 +334,6 @@ void prepareSearch::phase1_fill_me_buffer(cube_t state){
 			    middle_edges_perm_orientation[Index] = step + 1;
 				q.push(std::make_pair(currstate,step+1));
 			 }
-			 count++;
 		}
 		q.pop();
 	}
@@ -410,11 +397,9 @@ bool prepareSearch::DFSphase2(search_info_t& se_t){
 				int ud_edges_perm_index = ud_edges_perm_move[se_t.ud_edges_perm_index][move];
 				int middle_edges_perm_index = middle_edges_perm_move[se_t.middle_edges_perm_index][move];
 				int cornors_perm_index = corners_perm_move[se_t.cornors_perm_index][move];
-				//printf("e:%d c:%d\n",ep_mep[ud_edges_perm_index * 24 + middle_edges_perm_index],cp_mep[cornors_perm_index * 24 +middle_edges_perm_index]);
-				//int val = max(ud_edges_perm[ud_edges_perm_index],max(middle_edges_perm_orientation_move[middle_edges_perm_index],corners_perm[cornors_perm_index]));
 				int val =std::max(ep_mep[ud_edges_perm_index * 24 + middle_edges_perm_index],cp_mep[cornors_perm_index * 24 +middle_edges_perm_index] 	);
 				if(val + se_t.current_depth  < se_t.total_depth){
-					(*se_t.steps)[se_t.current_depth] = move;
+					(*se_t.steps).steps[se_t.current_depth] = move;
 					if(val == 0){
 							return true;
 					}	
@@ -435,27 +420,25 @@ bool prepareSearch::DFSphase2(search_info_t& se_t){
 }
 
 
-bool prepareSearch::phase2(cube_t    cube,steps_t steps){
-	for( int i = 0; i<steps.size(); i++ ){
-		cube = cubeState::moveRotate(steps[i], cube);
+bool prepareSearch::phase2(cube_t    cube,moves_t moves){
+	for( int i = 0; i < moves.vaildLength; i++ ){
+		cube = cubeState::moveRotate(moves.steps[i], cube);
 	}
-	int step2_len = (MAX_STEP - steps.size()) > 10 ? 10 : (MAX_STEP - steps.size());
-	for(int depth = 0 ;depth <= step2_len; ++depth){
-		steps_t steps2(depth);
+	int phase2_len = (MAX_STEP - moves.vaildLength) > 10 ? 10 : (MAX_STEP - moves.vaildLength);
+	for(int depth = 0 ;depth <= phase2_len; depth++){
+		moves_t moves2(depth);
 		search_info_t search;
-		search.face = 6;
+		search.face = -1;
 		search.ud_edges_perm_index = calculateIndex(cube, ud_edges_perm_index);
 		search.middle_edges_perm_index = calculateIndex(cube, middle_edges_perm_index);
 		search.cornors_perm_index = calculateIndex(cube, cornors_perm_index);
 		search.current_depth = 0;
 		search.total_depth = depth;
-		search.steps = &steps2;
+		search.steps = &moves2;
 	
 		if(DFSphase2(search)){
-			printSolution(steps);
-			std::cout << std::endl;
-			printSolution(steps2);	
-			std::cout << std::endl;
+			printSolution(moves);
+			printSolution(moves2);	
 			return true;
 		}
 	}
@@ -475,7 +458,7 @@ bool prepareSearch::DFSphase1(search_info_t& se_t){
 			int val = std::max(co_mec[MIDDLE_EDGES_COMBINATION * co_index + me_combine_index/24],
 								 eo_mec[MIDDLE_EDGES_COMBINATION * eo_index  + me_combine_index/24]);
 			if(val + se_t.current_depth  < se_t.total_depth){
-				(*se_t.steps)[se_t.current_depth] = move;
+				(*se_t.steps).steps[se_t.current_depth] = move;
 				if(val == 0){
 					if(phase2(se_t.initstate,*se_t.steps))	
 						return true;
@@ -501,14 +484,14 @@ bool prepareSearch::solve(cube_t cube){
 	int depth = 0;
 	
 	while(true){
-		steps_t steps(depth);
+		moves_t moves(depth);
 		search_info_t search;
 
-		search.face = 6;
+		search.face = -1;
 		search.initstate =cube;
 		search.current_depth = 0;
 		search.total_depth = depth;
-		search.steps = &steps;
+		search.steps = &moves;
 		search.co_index = calculateIndex(cube,co_index);
 		search.eo_index= calculateIndex(cube,eo_index);
 		search.me_combine_index = calculateIndex(cube,me_combine_index);
@@ -519,18 +502,19 @@ bool prepareSearch::solve(cube_t cube){
 	}
 
 }
-void prepareSearch::printSolution(steps_t steps){
-	for( int i = 0; i < steps.size(); i++ ){
+void prepareSearch::printSolution(moves_t s){
+	for( int i = 0; i < s.vaildLength; i++ ){
 		std::cout << " ";
-		int movesteps = (steps[i]%3+1);
+		int movesteps = (s.steps[i]%3+1);
 		if(movesteps ==3){
-			std::cout << "UDFBLR"[steps[i]/3] << "'";
+			std::cout << "UDFBLR"[s.steps[i]/3] << "'";
 		}else if(movesteps == 1){
-			std::cout << "UDFBLR"[steps[i]/3];
+			std::cout << "UDFBLR"[s.steps[i]/3];
 		}else {
-			std::cout << "UDFBLR"[steps[i]/3] << steps[i]%3+1;
+			std::cout << "UDFBLR"[s.steps[i]/3] << s.steps[i]%3+1;
 		}
 	}
+	std::cout << std::endl;;
 
 }
 
