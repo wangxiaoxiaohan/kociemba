@@ -71,7 +71,7 @@ bool utils::cubeVerify(cube_t& cube){
 	ceSwapCount += swapCount(cube.ep,12);
 	ceSwapCount += swapCount(cube.cp,8);
 	if(ceSwapCount % 2 != 0){
-		printf("block position is  illegal!\n",ceSwapCount);
+		printf("block position is  illegal!\n");
 		return false;
 	} 
 	

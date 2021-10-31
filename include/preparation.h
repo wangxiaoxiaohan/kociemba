@@ -24,7 +24,7 @@ class prepareSearch{
 public:
 	prepareSearch();
 	~prepareSearch();
-	bool solve(cube_t cube);
+	void solve(cube_t cube);
 
 	
 private:
@@ -33,7 +33,6 @@ private:
 	void phase2_fill_buffer(cube_t cube,int8_t *dest,int destSize,enum phase_type type);
 	void phase2_fill_pre();
 	void phase1_fill_buffer(cube_t goalstate,int8_t *dest,int destSize,enum phase_type type);
-	void phase1_fill_me_buffer(cube_t state);
 	void phase1_fill_pre();
 	bool DFSphase2(search_info_t& se_t);
 	bool phase2(cube_t    cube,moves_t steps);

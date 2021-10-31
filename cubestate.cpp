@@ -10,8 +10,8 @@
 	if(input < 2)			\
 		tmp = 1;	\
 	else 	\
-		tmp = -2; 		\			
-	(input + tmp); \
+		tmp = -2; 		\
+	(input + tmp);	\
 })
 #define  DECRERASE_CORNOR_ORIENTION_LOOP(input) \
 ({ \
@@ -19,8 +19,8 @@
 	if(input > 0)			\
 		tmp = -1;	\
 	else	\
-		tmp = 2;		\			
-	(input + tmp); \
+		tmp = 2;	\
+	(input + tmp);	\
 })
 
 

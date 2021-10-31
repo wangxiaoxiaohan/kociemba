@@ -118,7 +118,7 @@ void prepareSearch::init(){
 
 
 	memset(middle_edges_perm_orientation_move,0xff,sizeof(int) * MIDDLE_EDGES_PERM_ORIENTATION_SIZE * MOVE_COUNT);
-	phase1_fill_me_buffer(cube);
+	phase1_fill_buffer(cube,middle_edges_perm_orientation,MIDDLE_EDGES_PERM_ORIENTATION_SIZE,me_combine_index);
 
 	memset(cornors_orientation_move,0xff,sizeof(int) * CORNORS_ORIENTATION_SIZE * MOVE_COUNT);
 	phase1_fill_buffer(cube,cornors_orientation,CORNORS_ORIENTATION_SIZE,co_index);
@@ -232,8 +232,6 @@ void prepareSearch::phase2_fill_buffer(cube_t cube,int8_t *dest,int destSize,enu
 }
 
 void prepareSearch::phase2_fill_pre(){
-	int searchcount = 0;
-
 	memset(cp_mep,0xff,sizeof(int8_t) * MIDDLE_EDGES_PERM_SIZE *  CORNORS_PERM_SIZE);
 	std::queue<std::pair<phase2_pru_t,int>> q;
 	phase2_pru_t first_t;
@@ -290,6 +288,14 @@ void prepareSearch::phase1_fill_buffer(cube_t goalstate,int8_t *dest,int destSiz
 	std::pair<cube_t ,int> firstPair(goalstate,0);
 	q.push(firstPair);
 	dest[0] = 0;
+	if(type == me_combine_index){
+		for(int i = 0 ; i < MIDDLE_EDGES_PERM_SIZE;i++){
+			q.push(std::make_pair(middle_edges_perms[i],0));
+			int Index = calculateIndex(middle_edges_perms[i], me_combine_index);
+			dest[Index] = 0;
+		}
+	}
+
 	while(!q.empty()){ 
 		std::pair<cube_t ,int> front = q.front();
 		int fatherIndex =calculateIndex(front.first,type);
@@ -299,8 +305,10 @@ void prepareSearch::phase1_fill_buffer(cube_t goalstate,int8_t *dest,int destSiz
 			int Index =calculateIndex(currstate,type);
 		    if(type == co_index){
 				cornors_orientation_move[fatherIndex][move] = Index;
-			}else{
+			}else if(type == eo_index){
 				edges_orientation_move[fatherIndex][move] = Index;
+			}else{
+				middle_edges_perm_orientation_move[fatherIndex][move] = Index;
 			}
 			if(dest[Index] == -1){
 				dest[Index] = step + 1;
@@ -309,33 +317,6 @@ void prepareSearch::phase1_fill_buffer(cube_t goalstate,int8_t *dest,int destSiz
 		}
 		q.pop();
 
-	}
-}
-void prepareSearch::phase1_fill_me_buffer(cube_t state){
-	std::queue<std::pair<cube_t,int>> q;
-	memset(middle_edges_perm_orientation,0xff,MIDDLE_EDGES_PERM_ORIENTATION_SIZE);
-	std::pair<cube_t ,int> firstPair(state,0);
-	q.push(firstPair);
-	for(int i = 0 ; i <middle_edges_perms.size();i++){
-		q.push(std::make_pair(middle_edges_perms[i],0));
-		int Index = calculateIndex(middle_edges_perms[i], me_combine_index);
-		middle_edges_perm_orientation[Index] = 0;
-	}
-	while(!q.empty()){ 
-		std::pair<cube_t ,int> front = q.front();
-		int FatherIndex = calculateIndex(front.first, me_combine_index);
-		for( int move=0; move<18; move++ ){
-			int step = front.second;
-			cube_t currstate = cubeState::moveRotate(move, front.first);
-			int Index = calculateIndex(currstate, me_combine_index);
-			middle_edges_perm_orientation_move[FatherIndex][move] = Index;
-			 if(middle_edges_perm_orientation[Index] == -1)
-			 {
-			    middle_edges_perm_orientation[Index] = step + 1;
-				q.push(std::make_pair(currstate,step+1));
-			 }
-		}
-		q.pop();
 	}
 }
 void prepareSearch::phase1_fill_pre(){
@@ -480,7 +461,7 @@ bool prepareSearch::DFSphase1(search_info_t& se_t){
 	
 }
 
-bool prepareSearch::solve(cube_t cube){
+void  prepareSearch::solve(cube_t cube){
 	int depth = 0;
 	
 	while(true){
