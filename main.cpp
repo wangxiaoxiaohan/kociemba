@@ -18,17 +18,29 @@ std::map<std::string,int> str2move{
 };
 
 int main(int argc ,char **argv){
-	cube_t cube;
+	if(argc < 2){
+		std::cout <<"follow you cube string!";
+	}	
 
+	cube_t cube;
 	std::shared_ptr<prepareSearch> prs(new prepareSearch());
-	std::shared_ptr<cubeState> mover(new cubeState());
-	for(int i = 1 ; i < argc; i++){
-		std::string move(argv[i]);
-		cube = mover->moveRotate(str2move[move],cube);		
-	}
+
+	//for(int i = 1 ; i < argc; i++){
+	//	std::string move(argv[i]);
+	//	cube = cubeState::moveRotate(str2move[move],cube);		
+	//}
 	
-	//std::shared_ptr<utils> util(new utils());
-	//util->cubeVerify(cube);
+
+
+	//cube = cubeState::generateCube("BBBBBBRRRLLBLLBLLBUUUUUUUUUFRRFRRFRRLLLFFFFFFDDDDDDDDD");
+	//cube = cubeState::generateCube("BBBBBBBBBLLLLLRLLLUUUUUUUUURRRFRRRRRFLFFFFFFFDDDDDDDDD");
+	//cube = cubeState::generateCube("BBBBBBBFBLLLLLLLLFUUUUUUUUURRRRRRFRRRBLFFFFFFDDDDDDDDD");
+	cube = cubeState::generateCube(argv[1]);
+	std::shared_ptr<utils> util(new utils());
+	if(!util->cubeVerify(cube))
+		exit(0);
+	
+	
 
 	
 	struct timeval timeEnd, timeStart; 

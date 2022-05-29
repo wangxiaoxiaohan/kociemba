@@ -4,8 +4,10 @@ rubik's cube kocimeba solution implement
 
 
 How to use :
-To use my sample , follow you shuffle steps 
-./main U2 L2 R2 …
+To use my sample , follow your cube string 
+as ./main BBBBBBBFBLLLLLLLLFUUUUUUUUURRRRRRFRRRBLFFFFFFDDDDDDDDD
+see <cubestate.h> to learn how to make a cube string
+
 
 default max  solution step length is 20 
 
@@ -47,7 +49,7 @@ Follow this rules and you can make a legal “cube_t” to search solution
 
 a.position
 when you clear you personal cube orientation,
-every clock’s serial number has clear,then check every position, 
+every block’s serial number has clear,then check every position, 
 record which block occupy this position
 there is not a special skill
 
