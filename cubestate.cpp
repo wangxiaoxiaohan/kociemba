@@ -115,7 +115,7 @@ cube_t cubeState::generateCube(char *str){
 				cube.ep[i] = j;
 				cube.eo[i] = 0;
 				break;
-			}else if(edges[j][1] == str[face1] && edges[j][2] == str[face2]){
+			}else if(edges[j][1] == str[face1] && edges[j][0] == str[face2]){
 				cube.ep[i] = j;
 				cube.eo[i] = 1;			
 				break;

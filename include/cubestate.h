@@ -117,9 +117,9 @@ static const int8_t cornors_map[8][3] ={
 	{   19, 7,12},   
 	{   25,18,37},   
 	{   48,36,45},   
- 	{   46,43,12},   
+ 	{   46,43,16},   
 	{   52,10,1},   
-	{   54,3,20}, 
+	{   54,3,30}, 
 };
 static const int8_t edges_map[12][2] ={
 	{   26,38}, 
@@ -131,9 +131,10 @@ static const int8_t edges_map[12][2] ={
  	{   53,2},   
 	{   49,13},   
 	{	42,35}, 
-	{	40,17},   
-	{	4,11},	 
-	{	6,29}
+	{	40,17},
+	{	6,29},
+	{	4,11} 
+	
 
 };
 static const char* cornors[8]{
@@ -156,9 +157,9 @@ static const char* edges[12]{
 	"DB",
 	"DL",	
 	"FR",
-	"FL",	
-	"BL",
-	"BR"
+	"FL",
+	"BR",	
+	"BL"
 };
 
 class cubeState
